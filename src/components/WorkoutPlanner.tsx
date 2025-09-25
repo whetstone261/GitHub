@@ -676,11 +676,22 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
           (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
           (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
 
-        return equipmentMatch && difficultyMatch;
+        const categoryMatch = 
+          !selectedFilters.focusArea || 
+          selectedFilters.focusArea === '' ||
+          exercise.category === selectedFilters.focusArea ||
+          (selectedFilters.focusArea === 'upper-body' && ['chest', 'shoulders', 'triceps', 'biceps', 'back'].some(muscle => exercise.muscleGroups.includes(muscle))) ||
+          (selectedFilters.focusArea === 'lower-body' && ['quads', 'glutes', 'hamstrings', 'calves', 'legs'].some(muscle => exercise.muscleGroups.includes(muscle))) ||
+          (selectedFilters.focusArea === 'core' && exercise.muscleGroups.includes('core')) ||
+          (selectedFilters.focusArea === 'cardio' && exercise.category === 'cardio') ||
+          (selectedFilters.focusArea === 'flexibility' && exercise.category === 'flexibility');
+
+        return equipmentMatch && difficultyMatch && categoryMatch;
       });
 
-      // Select 4-6 exercises for the workout
-      const selectedExercises = filteredExercises.slice(0, 5);
+      // Shuffle and select 6-8 exercises for variety
+      const shuffled = [...filteredExercises].sort(() => 0.5 - Math.random());
+      const selectedExercises = shuffled.slice(0, Math.min(8, shuffled.length));
       
       const newPlan: WorkoutPlan = {
         id: Date.now().toString(),
