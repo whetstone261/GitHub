@@ -873,12 +873,17 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
             {isGenerating && (
               <div className="bg-white p-8 rounded-xl shadow-sm text-center">
                 <div className="animate-spin w-8 h-8 border-4 border-[#0074D9] border-t-transparent rounded-full mx-auto mb-4"></div>
-                <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">Creating Your Perfect Workout</h3>
-                <p className="text-gray-600">Our AI is analyzing your preferences and generating a personalized workout plan...</p>
+                <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">
+                  Creating Your Perfect {planType === 'single' ? 'Workout' : 'Weekly Plan'}
+                </h3>
+                <p className="text-gray-600">
+                  Our AI is analyzing your preferences and generating a personalized {planType === 'single' ? 'workout' : 'weekly schedule'}...
+                </p>
               </div>
             )}
 
-            {generatedPlan && !isGenerating && (
+            {/* Single Workout Display */}
+            {generatedPlan && !isGenerating && planType === 'single' && (
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -902,7 +907,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                 <div className="flex items-center space-x-6 mb-6 text-sm">
                   <div className="flex items-center text-gray-600">
                     <Clock className="w-4 h-4 mr-2" />
-                    {generatedPlan.duration} minutes
+                    {formatDuration(generatedPlan.duration)}
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Target className="w-4 h-4 mr-2" />
@@ -913,6 +918,12 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                     {generatedPlan.equipment === 'none' ? 'No Equipment' : 
                      generatedPlan.equipment === 'basic' ? 'Basic Equipment' : 'Full Gym'}
                   </div>
+                </div>
+
+                {/* Warm-up */}
+                <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <h3 className="font-semibold text-[#2C2C2C] mb-2">🔥 Warm-up (5 minutes)</h3>
+                  <p className="text-sm text-gray-600">Light cardio and dynamic stretching to prepare your body</p>
                 </div>
 
                 <div className="space-y-4">
@@ -931,9 +942,14 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                             {exercise.sets} sets × {exercise.reps} reps
                           </span>
                         )}
-                        {exercise.duration && !exercise.reps && (
+                        {exercise.restBetweenSets && (
+                          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                            Rest: {formatRestTime(exercise.restBetweenSets)}
+                          </span>
+                        )}
+                        {exercise.duration && (
                           <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded">
-                            {exercise.duration}s hold
+                            {formatDuration(exercise.duration)}
                           </span>
                         )}
                         <span className="text-gray-500">
@@ -943,15 +959,77 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                     </div>
                   ))}
                 </div>
+
+                {/* Cool-down */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="font-semibold text-[#2C2C2C] mb-2">❄️ Cool-down (5 minutes)</h3>
+                  <p className="text-sm text-gray-600">Static stretching and breathing exercises to help recovery</p>
+                </div>
               </div>
             )}
 
-            {!generatedPlan && !isGenerating && (
+            {/* Weekly Plan Display */}
+            {weeklyPlan.length > 0 && !isGenerating && planType === 'weekly' && (
+              <div className="space-y-6">
+                <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-[#2C2C2C]">Your Weekly Workout Plan</h2>
+                    <button
+                      onClick={() => setWorkoutPlans([...workoutPlans, ...weeklyPlan])}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                    >
+                      Save Weekly Plan
+                    </button>
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    {weeklySettings.workoutsPerWeek} workout days with recommended rest on: {weeklySettings.restDays.join(', ')}
+                  </p>
+                </div>
+
+                {weeklyPlan.map((plan, index) => (
+                  <div key={plan.id} className="bg-white p-6 rounded-xl shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-[#2C2C2C]">{plan.name}</h3>
+                        <p className="text-gray-600">{plan.description}</p>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm">
+                        <div className="flex items-center text-gray-600">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {formatDuration(plan.duration)}
+                        </div>
+                        <button className="bg-[#0074D9] text-white px-3 py-1 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center">
+                          <Play className="w-3 h-3 mr-1" />
+                          Start
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-2 text-sm">
+                      {plan.exercises.slice(0, 4).map((exercise, exerciseIndex) => (
+                        <div key={exercise.id} className="flex items-center p-2 bg-gray-50 rounded">
+                          <span className="w-5 h-5 bg-[#0074D9] text-white text-xs rounded-full flex items-center justify-center mr-2">
+                            {exerciseIndex + 1}
+                          </span>
+                          <span className="text-gray-700">{exercise.name}</span>
+                        </div>
+                      ))}
+                      {plan.exercises.length > 4 && (
+                        <div className="flex items-center p-2 text-gray-500">
+                          +{plan.exercises.length - 4} more exercises
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!generatedPlan && !weeklyPlan.length && !isGenerating && (
               <div className="bg-white p-8 rounded-xl shadow-sm text-center">
                 <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">Ready to Get Started?</h3>
                 <p className="text-gray-600 mb-6">
-                  Customize your preferences on the left and click "Generate AI Workout" to create your personalized fitness plan.
+                  Customize your preferences on the left and generate your personalized {planType === 'single' ? 'workout' : 'weekly plan'}.
                 </p>
               </div>
             )}
