@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, Play, Clock, Target, Dumbbell } from 'lucide-react';
+import { ArrowLeft, Filter, Play, Clock, Target, Dumbbell, Calendar } from 'lucide-react';
 import { User, WorkoutPlan, Exercise } from '../types';
 
 interface WorkoutPlannerProps {
@@ -18,6 +18,12 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   });
   const [generatedPlan, setGeneratedPlan] = useState<WorkoutPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [planType, setPlanType] = useState<'single' | 'weekly'>('single');
+  const [weeklyPlan, setWeeklyPlan] = useState<WorkoutPlan[]>([]);
+  const [weeklySettings, setWeeklySettings] = useState({
+    workoutsPerWeek: user.workoutFrequency,
+    restDays: [] as string[]
+  });
 
   const sampleExercises: Exercise[] = [
     // CARDIO EXERCISES
@@ -27,7 +33,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 1200, // 20 minutes
+      duration: 20, // 20 minutes
       description: 'Steady-pace outdoor running for cardiovascular fitness',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -37,7 +43,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 1800, // 30 minutes
+      duration: 25, // 25 minutes
       description: 'Controlled indoor running with adjustable pace and incline',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -47,7 +53,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'advanced',
-      duration: 900, // 15 minutes
+      duration: 15, // 15 minutes
       description: 'Alternating high-intensity sprints with recovery periods',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -57,9 +63,10 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 180,
+      duration: 3,
       reps: 50,
       sets: 3,
+      restBetweenSets: 30,
       description: 'Full-body cardio exercise to elevate heart rate',
       muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
     },
@@ -69,9 +76,10 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'intermediate',
-      duration: 240,
+      duration: 4,
       reps: 15,
       sets: 4,
+      restBetweenSets: 45,
       description: 'Full-body explosive movement combining squat, plank, and jump',
       muscleGroups: ['full-body', 'cardiovascular']
     },
@@ -81,9 +89,10 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'intermediate',
-      duration: 180,
+      duration: 3,
       reps: 30,
       sets: 3,
+      restBetweenSets: 30,
       description: 'Dynamic core and cardio exercise in plank position',
       muscleGroups: ['core', 'shoulders', 'legs', 'cardiovascular']
     },
@@ -93,7 +102,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 2400, // 40 minutes
+      duration: 30, // 30 minutes
       description: 'Low-impact cardio workout on stationary bike',
       muscleGroups: ['legs', 'glutes', 'cardiovascular']
     },
@@ -103,7 +112,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'intermediate',
-      duration: 1200, // 20 minutes
+      duration: 20, // 20 minutes
       description: 'Full-body cardio workout targeting multiple muscle groups',
       muscleGroups: ['back', 'legs', 'arms', 'core', 'cardiovascular']
     },
@@ -113,7 +122,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'basic',
       difficulty: 'intermediate',
-      duration: 600, // 10 minutes
+      duration: 10, // 10 minutes
       description: 'High-intensity cardio with coordination benefits',
       muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
     },
@@ -123,7 +132,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 1800, // 30 minutes
+      duration: 25, // 25 minutes
       description: 'Low-impact full-body cardio workout',
       muscleGroups: ['legs', 'arms', 'core', 'cardiovascular']
     },
@@ -689,17 +698,39 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         return equipmentMatch && difficultyMatch && categoryMatch;
       });
 
-      // Shuffle and select 6-8 exercises for variety
+      // Calculate target duration and select exercises to fill the time
+      const targetDuration = parseInt(selectedFilters.duration);
+      let currentDuration = 0;
+      let selectedExercises: Exercise[] = [];
+      
       const shuffled = [...filteredExercises].sort(() => 0.5 - Math.random());
-      const selectedExercises = shuffled.slice(0, Math.min(8, shuffled.length));
+      
+      // Add warm-up (5 minutes)
+      currentDuration += 5;
+      
+      // Select exercises to fill remaining time
+      for (const exercise of shuffled) {
+        const exerciseTime = exercise.duration + (exercise.sets && exercise.restBetweenSets ? 
+          (exercise.sets - 1) * (exercise.restBetweenSets / 60) : 0);
+        
+        if (currentDuration + exerciseTime <= targetDuration - 5) { // Leave 5 min for cool-down
+          selectedExercises.push(exercise);
+          currentDuration += exerciseTime;
+        }
+        
+        if (selectedExercises.length >= 8 || currentDuration >= targetDuration - 10) break;
+      }
+      
+      // Add cool-down (5 minutes)
+      currentDuration += 5;
       
       const newPlan: WorkoutPlan = {
         id: Date.now().toString(),
         userId: user.id,
-        name: `${selectedFilters.focusArea || 'Full Body'} Workout`,
-        description: `AI-generated ${parseInt(selectedFilters.duration)}-minute workout tailored to your goals`,
+        name: `${selectedFilters.focusArea ? selectedFilters.focusArea.charAt(0).toUpperCase() + selectedFilters.focusArea.slice(1).replace('-', ' ') : 'Full Body'} Workout`,
+        description: `AI-generated ${targetDuration}-minute workout with ${selectedExercises.length} exercises`,
         exercises: selectedExercises,
-        duration: parseInt(selectedFilters.duration),
+        duration: targetDuration,
         difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
         category: selectedFilters.focusArea || 'full-body',
         equipment: selectedFilters.equipment,
