@@ -20,32 +20,433 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   const [isGenerating, setIsGenerating] = useState(false);
 
   const sampleExercises: Exercise[] = [
+    // CARDIO EXERCISES
     {
       id: '1',
+      name: 'Running (Outdoor)',
+      category: 'cardio',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 1200, // 20 minutes
+      description: 'Steady-pace outdoor running for cardiovascular fitness',
+      muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
+    },
+    {
+      id: '2',
+      name: 'Treadmill Running',
+      category: 'cardio',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 1800, // 30 minutes
+      description: 'Controlled indoor running with adjustable pace and incline',
+      muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
+    },
+    {
+      id: '3',
+      name: 'High-Intensity Interval Running',
+      category: 'cardio',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 900, // 15 minutes
+      description: 'Alternating high-intensity sprints with recovery periods',
+      muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
+    },
+    {
+      id: '4',
+      name: 'Jumping Jacks',
+      category: 'cardio',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 50,
+      sets: 3,
+      description: 'Full-body cardio exercise to elevate heart rate',
+      muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
+    },
+    {
+      id: '5',
+      name: 'Burpees',
+      category: 'cardio',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 15,
+      sets: 4,
+      description: 'Full-body explosive movement combining squat, plank, and jump',
+      muscleGroups: ['full-body', 'cardiovascular']
+    },
+    {
+      id: '6',
+      name: 'Mountain Climbers',
+      category: 'cardio',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 30,
+      sets: 3,
+      description: 'Dynamic core and cardio exercise in plank position',
+      muscleGroups: ['core', 'shoulders', 'legs', 'cardiovascular']
+    },
+    {
+      id: '7',
+      name: 'Cycling (Stationary)',
+      category: 'cardio',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 2400, // 40 minutes
+      description: 'Low-impact cardio workout on stationary bike',
+      muscleGroups: ['legs', 'glutes', 'cardiovascular']
+    },
+    {
+      id: '8',
+      name: 'Rowing Machine',
+      category: 'cardio',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 1200, // 20 minutes
+      description: 'Full-body cardio workout targeting multiple muscle groups',
+      muscleGroups: ['back', 'legs', 'arms', 'core', 'cardiovascular']
+    },
+    {
+      id: '9',
+      name: 'Jump Rope',
+      category: 'cardio',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 600, // 10 minutes
+      description: 'High-intensity cardio with coordination benefits',
+      muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
+    },
+    {
+      id: '10',
+      name: 'Elliptical Machine',
+      category: 'cardio',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 1800, // 30 minutes
+      description: 'Low-impact full-body cardio workout',
+      muscleGroups: ['legs', 'arms', 'core', 'cardiovascular']
+    },
+
+    // UPPER BODY STRENGTH
+    {
+      id: '11',
       name: 'Push-ups',
       category: 'strength',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 60,
+      duration: 120,
       reps: 12,
       sets: 3,
       description: 'Classic push-up targeting chest, shoulders, and triceps',
       muscleGroups: ['chest', 'shoulders', 'triceps']
     },
     {
-      id: '2',
+      id: '12',
+      name: 'Diamond Push-ups',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 120,
+      reps: 8,
+      sets: 3,
+      description: 'Advanced push-up variation targeting triceps',
+      muscleGroups: ['triceps', 'chest', 'shoulders']
+    },
+    {
+      id: '13',
+      name: 'Pike Push-ups',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 10,
+      sets: 3,
+      description: 'Shoulder-focused push-up variation',
+      muscleGroups: ['shoulders', 'triceps', 'core']
+    },
+    {
+      id: '14',
+      name: 'Pull-ups',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 8,
+      sets: 3,
+      description: 'Upper body pulling exercise for back and biceps',
+      muscleGroups: ['back', 'biceps', 'shoulders']
+    },
+    {
+      id: '15',
+      name: 'Chin-ups',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 8,
+      sets: 3,
+      description: 'Bicep-focused pulling exercise',
+      muscleGroups: ['biceps', 'back', 'shoulders']
+    },
+    {
+      id: '16',
+      name: 'Dumbbell Bench Press',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 4,
+      description: 'Classic chest exercise with dumbbells',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '17',
+      name: 'Barbell Bench Press',
+      category: 'strength',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 300,
+      reps: 8,
+      sets: 4,
+      description: 'Heavy compound chest exercise',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '18',
+      name: 'Dumbbell Rows',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 3,
+      description: 'Back strengthening exercise with dumbbells',
+      muscleGroups: ['back', 'biceps', 'rear-delts']
+    },
+    {
+      id: '19',
+      name: 'Barbell Rows',
+      category: 'strength',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 4,
+      description: 'Compound back exercise with barbell',
+      muscleGroups: ['back', 'biceps', 'rear-delts']
+    },
+    {
+      id: '20',
+      name: 'Lat Pulldowns',
+      category: 'strength',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 3,
+      description: 'Machine-based back exercise',
+      muscleGroups: ['lats', 'biceps', 'rear-delts']
+    },
+    {
+      id: '21',
+      name: 'Overhead Press',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 4,
+      description: 'Shoulder strengthening exercise',
+      muscleGroups: ['shoulders', 'triceps', 'core']
+    },
+    {
+      id: '22',
+      name: 'Lateral Raises',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 15,
+      sets: 3,
+      description: 'Isolation exercise for shoulder width',
+      muscleGroups: ['shoulders']
+    },
+    {
+      id: '23',
+      name: 'Tricep Dips',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 12,
+      sets: 3,
+      description: 'Bodyweight tricep exercise using chair or bench',
+      muscleGroups: ['triceps', 'shoulders', 'chest']
+    },
+    {
+      id: '24',
+      name: 'Bicep Curls',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 15,
+      sets: 3,
+      description: 'Isolation exercise for bicep development',
+      muscleGroups: ['biceps']
+    },
+
+    // LOWER BODY STRENGTH
+    {
+      id: '25',
       name: 'Squats',
       category: 'strength',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 60,
+      duration: 120,
       reps: 15,
       sets: 3,
       description: 'Bodyweight squats for lower body strength',
       muscleGroups: ['quads', 'glutes', 'hamstrings']
     },
     {
-      id: '3',
+      id: '26',
+      name: 'Jump Squats',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 12,
+      sets: 3,
+      description: 'Explosive squat variation for power',
+      muscleGroups: ['quads', 'glutes', 'hamstrings', 'calves']
+    },
+    {
+      id: '27',
+      name: 'Goblet Squats',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 3,
+      description: 'Dumbbell squat variation for added resistance',
+      muscleGroups: ['quads', 'glutes', 'hamstrings', 'core']
+    },
+    {
+      id: '28',
+      name: 'Barbell Back Squats',
+      category: 'strength',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 300,
+      reps: 8,
+      sets: 4,
+      description: 'Heavy compound lower body exercise',
+      muscleGroups: ['quads', 'glutes', 'hamstrings', 'core']
+    },
+    {
+      id: '29',
+      name: 'Lunges',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 12,
+      sets: 3,
+      description: 'Unilateral leg exercise for balance and strength',
+      muscleGroups: ['quads', 'glutes', 'hamstrings', 'calves']
+    },
+    {
+      id: '30',
+      name: 'Walking Lunges',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 20,
+      sets: 3,
+      description: 'Dynamic lunge variation',
+      muscleGroups: ['quads', 'glutes', 'hamstrings', 'calves']
+    },
+    {
+      id: '31',
+      name: 'Bulgarian Split Squats',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 10,
+      sets: 3,
+      description: 'Single-leg squat variation',
+      muscleGroups: ['quads', 'glutes', 'hamstrings']
+    },
+    {
+      id: '32',
+      name: 'Deadlifts',
+      category: 'strength',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 300,
+      reps: 8,
+      sets: 4,
+      description: 'Compound movement for full-body strength',
+      muscleGroups: ['hamstrings', 'glutes', 'back', 'core']
+    },
+    {
+      id: '33',
+      name: 'Romanian Deadlifts',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 3,
+      description: 'Hamstring-focused deadlift variation',
+      muscleGroups: ['hamstrings', 'glutes', 'back']
+    },
+    {
+      id: '34',
+      name: 'Calf Raises',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 20,
+      sets: 3,
+      description: 'Isolation exercise for calf muscles',
+      muscleGroups: ['calves']
+    },
+    {
+      id: '35',
+      name: 'Hip Thrusts',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 15,
+      sets: 3,
+      description: 'Glute-focused exercise',
+      muscleGroups: ['glutes', 'hamstrings']
+    },
+    {
+      id: '36',
+      name: 'Leg Press',
+      category: 'strength',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 240,
+      reps: 12,
+      sets: 4,
+      description: 'Machine-based leg exercise',
+      muscleGroups: ['quads', 'glutes', 'hamstrings']
+    },
+
+    // CORE EXERCISES
+    {
+      id: '37',
       name: 'Plank',
       category: 'strength',
       equipment: 'none',
@@ -55,28 +456,206 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['core', 'shoulders']
     },
     {
-      id: '4',
-      name: 'Dumbbell Bench Press',
+      id: '38',
+      name: 'Side Plank',
       category: 'strength',
-      equipment: 'basic',
+      equipment: 'none',
       difficulty: 'intermediate',
       duration: 120,
-      reps: 10,
-      sets: 4,
-      description: 'Classic chest exercise with dumbbells',
-      muscleGroups: ['chest', 'shoulders', 'triceps']
+      description: 'Lateral core strengthening exercise',
+      muscleGroups: ['core', 'obliques', 'shoulders']
     },
     {
-      id: '5',
-      name: 'Deadlifts',
+      id: '39',
+      name: 'Crunches',
       category: 'strength',
-      equipment: 'gym',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 20,
+      sets: 3,
+      description: 'Basic abdominal exercise',
+      muscleGroups: ['abs']
+    },
+    {
+      id: '40',
+      name: 'Bicycle Crunches',
+      category: 'strength',
+      equipment: 'none',
       difficulty: 'intermediate',
-      duration: 150,
+      duration: 120,
+      reps: 30,
+      sets: 3,
+      description: 'Dynamic core exercise targeting obliques',
+      muscleGroups: ['abs', 'obliques']
+    },
+    {
+      id: '41',
+      name: 'Russian Twists',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 30,
+      sets: 3,
+      description: 'Rotational core exercise',
+      muscleGroups: ['obliques', 'abs']
+    },
+    {
+      id: '42',
+      name: 'Dead Bug',
+      category: 'strength',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 10,
+      sets: 3,
+      description: 'Core stability exercise',
+      muscleGroups: ['core', 'hip-flexors']
+    },
+    {
+      id: '43',
+      name: 'Hanging Leg Raises',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 120,
+      reps: 10,
+      sets: 3,
+      description: 'Advanced core exercise using pull-up bar',
+      muscleGroups: ['abs', 'hip-flexors']
+    },
+    {
+      id: '44',
+      name: 'Ab Wheel Rollouts',
+      category: 'strength',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 120,
       reps: 8,
+      sets: 3,
+      description: 'Advanced core strengthening exercise',
+      muscleGroups: ['core', 'shoulders']
+    },
+
+    // FLEXIBILITY & MOBILITY
+    {
+      id: '45',
+      name: 'Cat-Cow Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 180,
+      description: 'Spinal mobility exercise',
+      muscleGroups: ['spine', 'core']
+    },
+    {
+      id: '46',
+      name: 'Downward Dog',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 180,
+      description: 'Full-body stretch from yoga',
+      muscleGroups: ['hamstrings', 'calves', 'shoulders', 'back']
+    },
+    {
+      id: '47',
+      name: 'Pigeon Pose',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 300,
+      description: 'Deep hip flexor stretch',
+      muscleGroups: ['hip-flexors', 'glutes']
+    },
+    {
+      id: '48',
+      name: 'Child\'s Pose',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 240,
+      description: 'Relaxing stretch for back and shoulders',
+      muscleGroups: ['back', 'shoulders', 'hips']
+    },
+    {
+      id: '49',
+      name: 'Hamstring Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 180,
+      description: 'Seated or standing hamstring stretch',
+      muscleGroups: ['hamstrings']
+    },
+    {
+      id: '50',
+      name: 'Shoulder Rolls',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      description: 'Shoulder mobility exercise',
+      muscleGroups: ['shoulders', 'upper-back']
+    },
+
+    // FUNCTIONAL TRAINING
+    {
+      id: '51',
+      name: 'Turkish Get-ups',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 300,
+      reps: 5,
+      sets: 3,
+      description: 'Complex full-body movement pattern',
+      muscleGroups: ['full-body', 'core', 'shoulders']
+    },
+    {
+      id: '52',
+      name: 'Farmer\'s Walk',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      description: 'Functional carrying exercise',
+      muscleGroups: ['grip', 'core', 'traps', 'legs']
+    },
+    {
+      id: '53',
+      name: 'Bear Crawl',
+      category: 'functional',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 180,
+      description: 'Quadrupedal movement pattern',
+      muscleGroups: ['full-body', 'core', 'shoulders']
+    },
+    {
+      id: '54',
+      name: 'Kettlebell Swings',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 20,
       sets: 4,
-      description: 'Compound movement for full-body strength',
-      muscleGroups: ['hamstrings', 'glutes', 'back', 'core']
+      description: 'Explosive hip hinge movement',
+      muscleGroups: ['glutes', 'hamstrings', 'core', 'shoulders']
+    },
+    {
+      id: '55',
+      name: 'Box Jumps',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 10,
+      sets: 3,
+      description: 'Explosive lower body exercise',
+      muscleGroups: ['legs', 'glutes', 'calves']
     }
   ];
 
