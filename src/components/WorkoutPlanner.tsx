@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, Play, Clock, Target, Dumbbell, Calendar } from 'lucide-react';
+import { ArrowLeft, Filter, Play, Clock, Target, Dumbbell } from 'lucide-react';
 import { User, WorkoutPlan, Exercise } from '../types';
 
 interface WorkoutPlannerProps {
@@ -18,12 +18,6 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   });
   const [generatedPlan, setGeneratedPlan] = useState<WorkoutPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [planType, setPlanType] = useState<'single' | 'weekly'>('single');
-  const [weeklyPlan, setWeeklyPlan] = useState<WorkoutPlan[]>([]);
-  const [weeklySettings, setWeeklySettings] = useState({
-    workoutsPerWeek: user.workoutFrequency,
-    restDays: [] as string[]
-  });
 
   const sampleExercises: Exercise[] = [
     // CARDIO EXERCISES
@@ -33,7 +27,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 20, // 20 minutes
+      duration: 1200, // 20 minutes
       description: 'Steady-pace outdoor running for cardiovascular fitness',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -43,7 +37,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 25, // 25 minutes
+      duration: 1800, // 30 minutes
       description: 'Controlled indoor running with adjustable pace and incline',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -53,7 +47,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'advanced',
-      duration: 15, // 15 minutes
+      duration: 900, // 15 minutes
       description: 'Alternating high-intensity sprints with recovery periods',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -63,10 +57,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 3,
+      duration: 180,
       reps: 50,
       sets: 3,
-      restBetweenSets: 30,
       description: 'Full-body cardio exercise to elevate heart rate',
       muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
     },
@@ -76,10 +69,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'intermediate',
-      duration: 4,
+      duration: 240,
       reps: 15,
       sets: 4,
-      restBetweenSets: 45,
       description: 'Full-body explosive movement combining squat, plank, and jump',
       muscleGroups: ['full-body', 'cardiovascular']
     },
@@ -89,10 +81,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'intermediate',
-      duration: 3,
+      duration: 180,
       reps: 30,
       sets: 3,
-      restBetweenSets: 30,
       description: 'Dynamic core and cardio exercise in plank position',
       muscleGroups: ['core', 'shoulders', 'legs', 'cardiovascular']
     },
@@ -102,7 +93,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 30, // 30 minutes
+      duration: 2400, // 40 minutes
       description: 'Low-impact cardio workout on stationary bike',
       muscleGroups: ['legs', 'glutes', 'cardiovascular']
     },
@@ -112,7 +103,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'intermediate',
-      duration: 20, // 20 minutes
+      duration: 1200, // 20 minutes
       description: 'Full-body cardio workout targeting multiple muscle groups',
       muscleGroups: ['back', 'legs', 'arms', 'core', 'cardiovascular']
     },
@@ -122,7 +113,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'basic',
       difficulty: 'intermediate',
-      duration: 10, // 10 minutes
+      duration: 600, // 10 minutes
       description: 'High-intensity cardio with coordination benefits',
       muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
     },
@@ -132,7 +123,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 25, // 25 minutes
+      duration: 1800, // 30 minutes
       description: 'Low-impact full-body cardio workout',
       muscleGroups: ['legs', 'arms', 'core', 'cardiovascular']
     },
@@ -698,39 +689,17 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         return equipmentMatch && difficultyMatch && categoryMatch;
       });
 
-      // Calculate target duration and select exercises to fill the time
-      const targetDuration = parseInt(selectedFilters.duration);
-      let currentDuration = 0;
-      let selectedExercises: Exercise[] = [];
-      
+      // Shuffle and select 6-8 exercises for variety
       const shuffled = [...filteredExercises].sort(() => 0.5 - Math.random());
-      
-      // Add warm-up (5 minutes)
-      currentDuration += 5;
-      
-      // Select exercises to fill remaining time
-      for (const exercise of shuffled) {
-        const exerciseTime = exercise.duration + (exercise.sets && exercise.restBetweenSets ? 
-          (exercise.sets - 1) * (exercise.restBetweenSets / 60) : 0);
-        
-        if (currentDuration + exerciseTime <= targetDuration - 5) { // Leave 5 min for cool-down
-          selectedExercises.push(exercise);
-          currentDuration += exerciseTime;
-        }
-        
-        if (selectedExercises.length >= 8 || currentDuration >= targetDuration - 10) break;
-      }
-      
-      // Add cool-down (5 minutes)
-      currentDuration += 5;
+      const selectedExercises = shuffled.slice(0, Math.min(8, shuffled.length));
       
       const newPlan: WorkoutPlan = {
         id: Date.now().toString(),
         userId: user.id,
-        name: `${selectedFilters.focusArea ? selectedFilters.focusArea.charAt(0).toUpperCase() + selectedFilters.focusArea.slice(1).replace('-', ' ') : 'Full Body'} Workout`,
-        description: `AI-generated ${targetDuration}-minute workout with ${selectedExercises.length} exercises`,
+        name: `${selectedFilters.focusArea || 'Full Body'} Workout`,
+        description: `AI-generated ${parseInt(selectedFilters.duration)}-minute workout tailored to your goals`,
         exercises: selectedExercises,
-        duration: targetDuration,
+        duration: parseInt(selectedFilters.duration),
         difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
         category: selectedFilters.focusArea || 'full-body',
         equipment: selectedFilters.equipment,
@@ -873,17 +842,12 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
             {isGenerating && (
               <div className="bg-white p-8 rounded-xl shadow-sm text-center">
                 <div className="animate-spin w-8 h-8 border-4 border-[#0074D9] border-t-transparent rounded-full mx-auto mb-4"></div>
-                <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">
-                  Creating Your Perfect {planType === 'single' ? 'Workout' : 'Weekly Plan'}
-                </h3>
-                <p className="text-gray-600">
-                  Our AI is analyzing your preferences and generating a personalized {planType === 'single' ? 'workout' : 'weekly schedule'}...
-                </p>
+                <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">Creating Your Perfect Workout</h3>
+                <p className="text-gray-600">Our AI is analyzing your preferences and generating a personalized workout plan...</p>
               </div>
             )}
 
-            {/* Single Workout Display */}
-            {generatedPlan && !isGenerating && planType === 'single' && (
+            {generatedPlan && !isGenerating && (
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -907,7 +871,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                 <div className="flex items-center space-x-6 mb-6 text-sm">
                   <div className="flex items-center text-gray-600">
                     <Clock className="w-4 h-4 mr-2" />
-                    {formatDuration(generatedPlan.duration)}
+                    {generatedPlan.duration} minutes
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Target className="w-4 h-4 mr-2" />
@@ -918,12 +882,6 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                     {generatedPlan.equipment === 'none' ? 'No Equipment' : 
                      generatedPlan.equipment === 'basic' ? 'Basic Equipment' : 'Full Gym'}
                   </div>
-                </div>
-
-                {/* Warm-up */}
-                <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <h3 className="font-semibold text-[#2C2C2C] mb-2">🔥 Warm-up (5 minutes)</h3>
-                  <p className="text-sm text-gray-600">Light cardio and dynamic stretching to prepare your body</p>
                 </div>
 
                 <div className="space-y-4">
@@ -942,14 +900,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                             {exercise.sets} sets × {exercise.reps} reps
                           </span>
                         )}
-                        {exercise.restBetweenSets && (
-                          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                            Rest: {formatRestTime(exercise.restBetweenSets)}
-                          </span>
-                        )}
-                        {exercise.duration && (
+                        {exercise.duration && !exercise.reps && (
                           <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded">
-                            {formatDuration(exercise.duration)}
+                            {exercise.duration}s hold
                           </span>
                         )}
                         <span className="text-gray-500">
@@ -959,77 +912,15 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                     </div>
                   ))}
                 </div>
-
-                {/* Cool-down */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h3 className="font-semibold text-[#2C2C2C] mb-2">❄️ Cool-down (5 minutes)</h3>
-                  <p className="text-sm text-gray-600">Static stretching and breathing exercises to help recovery</p>
-                </div>
               </div>
             )}
 
-            {/* Weekly Plan Display */}
-            {weeklyPlan.length > 0 && !isGenerating && planType === 'weekly' && (
-              <div className="space-y-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-[#2C2C2C]">Your Weekly Workout Plan</h2>
-                    <button
-                      onClick={() => setWorkoutPlans([...workoutPlans, ...weeklyPlan])}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                    >
-                      Save Weekly Plan
-                    </button>
-                  </div>
-                  <p className="text-gray-600 mb-4">
-                    {weeklySettings.workoutsPerWeek} workout days with recommended rest on: {weeklySettings.restDays.join(', ')}
-                  </p>
-                </div>
-
-                {weeklyPlan.map((plan, index) => (
-                  <div key={plan.id} className="bg-white p-6 rounded-xl shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-[#2C2C2C]">{plan.name}</h3>
-                        <p className="text-gray-600">{plan.description}</p>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <div className="flex items-center text-gray-600">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {formatDuration(plan.duration)}
-                        </div>
-                        <button className="bg-[#0074D9] text-white px-3 py-1 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center">
-                          <Play className="w-3 h-3 mr-1" />
-                          Start
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-2 text-sm">
-                      {plan.exercises.slice(0, 4).map((exercise, exerciseIndex) => (
-                        <div key={exercise.id} className="flex items-center p-2 bg-gray-50 rounded">
-                          <span className="w-5 h-5 bg-[#0074D9] text-white text-xs rounded-full flex items-center justify-center mr-2">
-                            {exerciseIndex + 1}
-                          </span>
-                          <span className="text-gray-700">{exercise.name}</span>
-                        </div>
-                      ))}
-                      {plan.exercises.length > 4 && (
-                        <div className="flex items-center p-2 text-gray-500">
-                          +{plan.exercises.length - 4} more exercises
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!generatedPlan && !weeklyPlan.length && !isGenerating && (
+            {!generatedPlan && !isGenerating && (
               <div className="bg-white p-8 rounded-xl shadow-sm text-center">
                 <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">Ready to Get Started?</h3>
                 <p className="text-gray-600 mb-6">
-                  Customize your preferences on the left and generate your personalized {planType === 'single' ? 'workout' : 'weekly plan'}.
+                  Customize your preferences on the left and click "Generate AI Workout" to create your personalized fitness plan.
                 </p>
               </div>
             )}
