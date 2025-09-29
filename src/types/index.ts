@@ -39,6 +39,10 @@ export interface WorkoutPlan {
   category: string;
   equipment: string;
   createdAt: Date;
+  isWeeklyPlan?: boolean;
+  weeklyWorkouts?: WorkoutPlan[];
+  dayOfWeek?: string;
+  focusArea?: string;
 }
 
 export interface Achievement {
