@@ -21,9 +21,10 @@ export interface Exercise {
   category: string;
   equipment: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  duration: number;
+  duration: number; // in minutes
   reps?: number;
   sets?: number;
+  restBetweenSets?: number; // in seconds
   description: string;
   muscleGroups: string[];
 }
@@ -39,10 +40,6 @@ export interface WorkoutPlan {
   category: string;
   equipment: string;
   createdAt: Date;
-  isWeeklyPlan?: boolean;
-  weeklyWorkouts?: WorkoutPlan[];
-  dayOfWeek?: string;
-  focusArea?: string;
 }
 
 export interface Achievement {
