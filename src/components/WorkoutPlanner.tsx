@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, Play, Clock, Target, Dumbbell, Calendar } from 'lucide-react';
+import { ArrowLeft, Filter, Play, Clock, Target, Dumbbell } from 'lucide-react';
 import { User, WorkoutPlan, Exercise } from '../types';
 
 interface WorkoutPlannerProps {
@@ -14,16 +14,98 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     duration: user.preferredDuration.toString(),
     focusArea: '',
     difficulty: user.fitnessLevel,
-    equipment: user.equipment
+    equipment: user.equipment,
+    planType: 'single' // 'single' or 'weekly'
   });
   const [generatedPlan, setGeneratedPlan] = useState<WorkoutPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [planType, setPlanType] = useState<'single' | 'weekly'>('single');
-  const [weeklyPlan, setWeeklyPlan] = useState<WorkoutPlan[]>([]);
-  const [weeklySettings, setWeeklySettings] = useState({
-    workoutsPerWeek: user.workoutFrequency,
-    restDays: [] as string[]
-  });
+  const [weeklyFrequency, setWeeklyFrequency] = useState(user.workoutFrequency);
+
+  // Helper function to format time properly
+  const formatTime = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (minutes < 60) {
+      return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  };
+
+  // Helper function to get rest time based on difficulty
+  const getRestTime = (difficulty: string, exerciseType: string): number => {
+    if (exerciseType === 'cardio') return 60; // 1 minute rest for cardio
+    if (difficulty === 'beginner') return 60; // 1 minute
+    if (difficulty === 'intermediate') return 90; // 1.5 minutes
+    return 120; // 2 minutes for advanced
+  };
+
+  // Helper function to analyze past workouts and get underused muscle groups
+  const getUnderusedMuscleGroups = (): string[] => {
+    const recentWorkouts = workoutPlans.slice(-5); // Last 5 workouts
+    const muscleGroupCount: { [key: string]: number } = {};
+    
+    // Count muscle group usage
+    recentWorkouts.forEach(workout => {
+      workout.exercises.forEach(exercise => {
+        exercise.muscleGroups.forEach(muscle => {
+          muscleGroupCount[muscle] = (muscleGroupCount[muscle] || 0) + 1;
+        });
+      });
+    });
+
+    // Find underused muscle groups
+    const allMuscleGroups = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'glutes', 'calves', 'core', 'cardiovascular'];
+    return allMuscleGroups.filter(muscle => (muscleGroupCount[muscle] || 0) < 2);
+  };
+
+  // Helper function to get recommended rest days
+  const getRestDays = (frequency: number): string[] => {
+    const restDayMap: { [key: number]: string[] } = {
+      3: ['Wednesday', 'Saturday', 'Sunday'],
+      4: ['Wednesday', 'Saturday', 'Sunday'],
+      5: ['Wednesday', 'Sunday'],
+      6: ['Sunday'],
+      7: []
+    };
+    return restDayMap[frequency] || ['Sunday'];
+  };
+
+  // Helper function to get weekly workout schedule
+  const getWeeklySchedule = (frequency: number): { day: string; focus: string }[] => {
+    const schedules: { [key: number]: { day: string; focus: string }[] } = {
+      3: [
+        { day: 'Monday', focus: 'upper-body' },
+        { day: 'Tuesday', focus: 'lower-body' },
+        { day: 'Thursday', focus: 'cardio' },
+        { day: 'Friday', focus: 'full-body' }
+      ],
+      4: [
+        { day: 'Monday', focus: 'upper-body' },
+        { day: 'Tuesday', focus: 'lower-body' },
+        { day: 'Thursday', focus: 'cardio' },
+        { day: 'Friday', focus: 'core' }
+      ],
+      5: [
+        { day: 'Monday', focus: 'upper-body' },
+        { day: 'Tuesday', focus: 'lower-body' },
+        { day: 'Thursday', focus: 'cardio' },
+        { day: 'Friday', focus: 'core' },
+        { day: 'Saturday', focus: 'full-body' }
+      ],
+      6: [
+        { day: 'Monday', focus: 'upper-body' },
+        { day: 'Tuesday', focus: 'lower-body' },
+        { day: 'Wednesday', focus: 'cardio' },
+        { day: 'Thursday', focus: 'upper-body' },
+        { day: 'Friday', focus: 'lower-body' },
+        { day: 'Saturday', focus: 'core' }
+      ]
+    };
+    return schedules[frequency]?.slice(0, frequency) || schedules[3];
+  };
 
   const sampleExercises: Exercise[] = [
     // CARDIO EXERCISES
@@ -33,7 +115,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 20, // 20 minutes
+      duration: 1200, // 20 minutes
       description: 'Steady-pace outdoor running for cardiovascular fitness',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -43,7 +125,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 25, // 25 minutes
+      duration: 1800, // 30 minutes
       description: 'Controlled indoor running with adjustable pace and incline',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -53,7 +135,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'advanced',
-      duration: 15, // 15 minutes
+      duration: 900, // 15 minutes
       description: 'Alternating high-intensity sprints with recovery periods',
       muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
@@ -63,10 +145,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 3,
+      duration: 180,
       reps: 50,
       sets: 3,
-      restBetweenSets: 30,
       description: 'Full-body cardio exercise to elevate heart rate',
       muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
     },
@@ -76,10 +157,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'intermediate',
-      duration: 4,
+      duration: 240,
       reps: 15,
       sets: 4,
-      restBetweenSets: 45,
       description: 'Full-body explosive movement combining squat, plank, and jump',
       muscleGroups: ['full-body', 'cardiovascular']
     },
@@ -89,10 +169,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'none',
       difficulty: 'intermediate',
-      duration: 3,
+      duration: 180,
       reps: 30,
       sets: 3,
-      restBetweenSets: 30,
       description: 'Dynamic core and cardio exercise in plank position',
       muscleGroups: ['core', 'shoulders', 'legs', 'cardiovascular']
     },
@@ -102,7 +181,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 30, // 30 minutes
+      duration: 2400, // 40 minutes
       description: 'Low-impact cardio workout on stationary bike',
       muscleGroups: ['legs', 'glutes', 'cardiovascular']
     },
@@ -112,7 +191,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'intermediate',
-      duration: 20, // 20 minutes
+      duration: 1200, // 20 minutes
       description: 'Full-body cardio workout targeting multiple muscle groups',
       muscleGroups: ['back', 'legs', 'arms', 'core', 'cardiovascular']
     },
@@ -122,7 +201,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'basic',
       difficulty: 'intermediate',
-      duration: 10, // 10 minutes
+      duration: 600, // 10 minutes
       description: 'High-intensity cardio with coordination benefits',
       muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
     },
@@ -132,7 +211,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
-      duration: 25, // 25 minutes
+      duration: 1800, // 30 minutes
       description: 'Low-impact full-body cardio workout',
       muscleGroups: ['legs', 'arms', 'core', 'cardiovascular']
     },
@@ -673,7 +752,117 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     
     // Simulate AI generation delay
     setTimeout(() => {
-      // Filter exercises based on user equipment and difficulty
+      if (selectedFilters.planType === 'weekly') {
+        generateWeeklyPlan();
+      } else {
+        generateSingleWorkout();
+      }
+      setIsGenerating(false);
+    }, 2000);
+  };
+
+  const generateSingleWorkout = () => {
+    const targetDuration = parseInt(selectedFilters.duration) * 60; // Convert to seconds
+    const warmupTime = 5 * 60; // 5 minutes
+    const cooldownTime = 5 * 60; // 5 minutes
+    const exerciseTime = targetDuration - warmupTime - cooldownTime;
+    
+    // Get underused muscle groups for better variety
+    const underusedMuscles = getUnderusedMuscleGroups();
+    
+    // Filter exercises based on user equipment and difficulty
+    const filteredExercises = sampleExercises.filter(exercise => {
+      const equipmentMatch = 
+        (selectedFilters.equipment === 'none' && exercise.equipment === 'none') ||
+        (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
+        (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
+      
+      const difficultyMatch = 
+        exercise.difficulty === selectedFilters.difficulty ||
+        (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
+        (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
+
+      const categoryMatch = 
+        !selectedFilters.focusArea || 
+        selectedFilters.focusArea === '' ||
+        exercise.category === selectedFilters.focusArea ||
+        (selectedFilters.focusArea === 'upper-body' && ['chest', 'shoulders', 'triceps', 'biceps', 'back'].some(muscle => exercise.muscleGroups.includes(muscle))) ||
+        (selectedFilters.focusArea === 'lower-body' && ['quads', 'glutes', 'hamstrings', 'calves', 'legs'].some(muscle => exercise.muscleGroups.includes(muscle))) ||
+        (selectedFilters.focusArea === 'core' && exercise.muscleGroups.includes('core')) ||
+        (selectedFilters.focusArea === 'cardio' && exercise.category === 'cardio') ||
+        (selectedFilters.focusArea === 'flexibility' && exercise.category === 'flexibility');
+
+      // Prioritize exercises that target underused muscle groups
+      const targetsUnderusedMuscle = underusedMuscles.some(muscle => exercise.muscleGroups.includes(muscle));
+
+      return equipmentMatch && difficultyMatch && categoryMatch;
+    });
+
+    // Prioritize underused muscle groups, then shuffle
+    const prioritizedExercises = filteredExercises.sort((a, b) => {
+      const aTargetsUnderused = underusedMuscles.some(muscle => a.muscleGroups.includes(muscle));
+      const bTargetsUnderused = underusedMuscles.some(muscle => b.muscleGroups.includes(muscle));
+      if (aTargetsUnderused && !bTargetsUnderused) return -1;
+      if (!aTargetsUnderused && bTargetsUnderused) return 1;
+      return 0.5 - Math.random();
+    });
+
+    // Select exercises to fill the target time
+    const selectedExercises: Exercise[] = [];
+    let currentTime = 0;
+    let exerciseIndex = 0;
+
+    while (currentTime < exerciseTime && exerciseIndex < prioritizedExercises.length) {
+      const exercise = prioritizedExercises[exerciseIndex];
+      const exerciseDuration = exercise.duration || 120; // Default 2 minutes if not specified
+      const restTime = getRestTime(selectedFilters.difficulty, exercise.category);
+      const totalExerciseTime = exerciseDuration + restTime;
+
+      if (currentTime + totalExerciseTime <= exerciseTime) {
+        selectedExercises.push({
+          ...exercise,
+          restTime: restTime
+        });
+        currentTime += totalExerciseTime;
+      }
+      exerciseIndex++;
+    }
+
+    // Add warm-up and cool-down exercises
+    const warmupExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(0, 2);
+    const cooldownExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(2, 4);
+
+    const newPlan: WorkoutPlan = {
+      id: Date.now().toString(),
+      userId: user.id,
+      name: `${selectedFilters.focusArea || 'Full Body'} Workout`,
+      description: `AI-generated ${parseInt(selectedFilters.duration)}-minute workout tailored to your goals`,
+      exercises: [
+        ...warmupExercises.map(ex => ({ ...ex, isWarmup: true })),
+        ...selectedExercises,
+        ...cooldownExercises.map(ex => ({ ...ex, isCooldown: true }))
+      ],
+      duration: parseInt(selectedFilters.duration),
+      difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
+      category: selectedFilters.focusArea || 'full-body',
+      equipment: selectedFilters.equipment,
+      createdAt: new Date()
+    };
+
+    setGeneratedPlan(newPlan);
+  };
+
+  const generateWeeklyPlan = () => {
+    const schedule = getWeeklySchedule(weeklyFrequency);
+    const weeklyWorkouts: WorkoutPlan[] = [];
+    
+    schedule.forEach((dayPlan, index) => {
+      const targetDuration = parseInt(selectedFilters.duration) * 60;
+      const warmupTime = 5 * 60;
+      const cooldownTime = 5 * 60;
+      const exerciseTime = targetDuration - warmupTime - cooldownTime;
+      
+      // Filter exercises for this day's focus
       const filteredExercises = sampleExercises.filter(exercise => {
         const equipmentMatch = 
           (selectedFilters.equipment === 'none' && exercise.equipment === 'none') ||
@@ -685,61 +874,80 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
           (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
           (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
 
-        const categoryMatch = 
-          !selectedFilters.focusArea || 
-          selectedFilters.focusArea === '' ||
-          exercise.category === selectedFilters.focusArea ||
-          (selectedFilters.focusArea === 'upper-body' && ['chest', 'shoulders', 'triceps', 'biceps', 'back'].some(muscle => exercise.muscleGroups.includes(muscle))) ||
-          (selectedFilters.focusArea === 'lower-body' && ['quads', 'glutes', 'hamstrings', 'calves', 'legs'].some(muscle => exercise.muscleGroups.includes(muscle))) ||
-          (selectedFilters.focusArea === 'core' && exercise.muscleGroups.includes('core')) ||
-          (selectedFilters.focusArea === 'cardio' && exercise.category === 'cardio') ||
-          (selectedFilters.focusArea === 'flexibility' && exercise.category === 'flexibility');
+        const focusMatch = 
+          exercise.category === dayPlan.focus ||
+          (dayPlan.focus === 'upper-body' && ['chest', 'shoulders', 'triceps', 'biceps', 'back'].some(muscle => exercise.muscleGroups.includes(muscle))) ||
+          (dayPlan.focus === 'lower-body' && ['quads', 'glutes', 'hamstrings', 'calves', 'legs'].some(muscle => exercise.muscleGroups.includes(muscle))) ||
+          (dayPlan.focus === 'core' && exercise.muscleGroups.includes('core')) ||
+          (dayPlan.focus === 'cardio' && exercise.category === 'cardio') ||
+          (dayPlan.focus === 'full-body');
 
-        return equipmentMatch && difficultyMatch && categoryMatch;
+        return equipmentMatch && difficultyMatch && focusMatch;
       });
 
-      // Calculate target duration and select exercises to fill the time
-      const targetDuration = parseInt(selectedFilters.duration);
-      let currentDuration = 0;
-      let selectedExercises: Exercise[] = [];
-      
+      // Select exercises for this day
       const shuffled = [...filteredExercises].sort(() => 0.5 - Math.random());
-      
-      // Add warm-up (5 minutes)
-      currentDuration += 5;
-      
-      // Select exercises to fill remaining time
-      for (const exercise of shuffled) {
-        const exerciseTime = exercise.duration + (exercise.sets && exercise.restBetweenSets ? 
-          (exercise.sets - 1) * (exercise.restBetweenSets / 60) : 0);
-        
-        if (currentDuration + exerciseTime <= targetDuration - 5) { // Leave 5 min for cool-down
-          selectedExercises.push(exercise);
-          currentDuration += exerciseTime;
+      const selectedExercises: Exercise[] = [];
+      let currentTime = 0;
+      let exerciseIndex = 0;
+
+      while (currentTime < exerciseTime && exerciseIndex < shuffled.length) {
+        const exercise = shuffled[exerciseIndex];
+        const exerciseDuration = exercise.duration || 120;
+        const restTime = getRestTime(selectedFilters.difficulty, exercise.category);
+        const totalExerciseTime = exerciseDuration + restTime;
+
+        if (currentTime + totalExerciseTime <= exerciseTime) {
+          selectedExercises.push({
+            ...exercise,
+            restTime: restTime
+          });
+          currentTime += totalExerciseTime;
         }
-        
-        if (selectedExercises.length >= 8 || currentDuration >= targetDuration - 10) break;
+        exerciseIndex++;
       }
-      
-      // Add cool-down (5 minutes)
-      currentDuration += 5;
-      
-      const newPlan: WorkoutPlan = {
-        id: Date.now().toString(),
+
+      const warmupExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(0, 2);
+      const cooldownExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(2, 4);
+
+      const dayWorkout: WorkoutPlan = {
+        id: `${Date.now()}-${index}`,
         userId: user.id,
-        name: `${selectedFilters.focusArea ? selectedFilters.focusArea.charAt(0).toUpperCase() + selectedFilters.focusArea.slice(1).replace('-', ' ') : 'Full Body'} Workout`,
-        description: `AI-generated ${targetDuration}-minute workout with ${selectedExercises.length} exercises`,
-        exercises: selectedExercises,
-        duration: targetDuration,
+        name: `${dayPlan.day} - ${dayPlan.focus.charAt(0).toUpperCase() + dayPlan.focus.slice(1).replace('-', ' ')} Focus`,
+        description: `${parseInt(selectedFilters.duration)}-minute ${dayPlan.focus} workout for ${dayPlan.day}`,
+        exercises: [
+          ...warmupExercises.map(ex => ({ ...ex, isWarmup: true })),
+          ...selectedExercises,
+          ...cooldownExercises.map(ex => ({ ...ex, isCooldown: true }))
+        ],
+        duration: parseInt(selectedFilters.duration),
         difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
-        category: selectedFilters.focusArea || 'full-body',
+        category: dayPlan.focus,
         equipment: selectedFilters.equipment,
+        dayOfWeek: dayPlan.day,
+        focusArea: dayPlan.focus,
         createdAt: new Date()
       };
 
-      setGeneratedPlan(newPlan);
-      setIsGenerating(false);
-    }, 2000);
+      weeklyWorkouts.push(dayWorkout);
+    });
+
+    const weeklyPlan: WorkoutPlan = {
+      id: Date.now().toString(),
+      userId: user.id,
+      name: `Weekly Workout Plan - ${weeklyFrequency} Days`,
+      description: `Complete ${weeklyFrequency}-day workout plan with recommended rest days`,
+      exercises: [],
+      duration: parseInt(selectedFilters.duration),
+      difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
+      category: 'weekly-plan',
+      equipment: selectedFilters.equipment,
+      isWeeklyPlan: true,
+      weeklyWorkouts: weeklyWorkouts,
+      createdAt: new Date()
+    };
+
+    setGeneratedPlan(weeklyPlan);
   };
 
   const saveWorkout = () => {
@@ -777,6 +985,55 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
             </div>
 
             <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Plan Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setSelectedFilters(prev => ({ ...prev, planType: 'single' }))}
+                    className={`p-3 text-sm rounded-lg border transition-colors ${
+                      selectedFilters.planType === 'single'
+                        ? 'border-[#0074D9] bg-blue-50 text-[#0074D9]'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    Single Workout
+                  </button>
+                  <button
+                    onClick={() => setSelectedFilters(prev => ({ ...prev, planType: 'weekly' }))}
+                    className={`p-3 text-sm rounded-lg border transition-colors ${
+                      selectedFilters.planType === 'weekly'
+                        ? 'border-[#0074D9] bg-blue-50 text-[#0074D9]'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    Weekly Plan
+                  </button>
+                </div>
+              </div>
+
+              {selectedFilters.planType === 'weekly' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Workouts per week: {weeklyFrequency}
+                  </label>
+                  <input
+                    type="range"
+                    min="3"
+                    max="6"
+                    value={weeklyFrequency}
+                    onChange={(e) => setWeeklyFrequency(parseInt(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>3 days</span>
+                    <span>6 days</span>
+                  </div>
+                  <div className="mt-2 text-xs text-gray-600">
+                    <strong>Rest days:</strong> {getRestDays(weeklyFrequency).join(', ')}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Duration</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -863,7 +1120,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                     : 'bg-[#0074D9] text-white hover:bg-blue-700'
                 }`}
               >
-                {isGenerating ? 'Generating...' : 'Generate AI Workout'}
+                {isGenerating ? 'Generating...' : `Generate AI ${selectedFilters.planType === 'weekly' ? 'Weekly Plan' : 'Workout'}`}
               </button>
             </div>
           </div>
@@ -873,164 +1130,203 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
             {isGenerating && (
               <div className="bg-white p-8 rounded-xl shadow-sm text-center">
                 <div className="animate-spin w-8 h-8 border-4 border-[#0074D9] border-t-transparent rounded-full mx-auto mb-4"></div>
-                <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">
-                  Creating Your Perfect {planType === 'single' ? 'Workout' : 'Weekly Plan'}
-                </h3>
-                <p className="text-gray-600">
-                  Our AI is analyzing your preferences and generating a personalized {planType === 'single' ? 'workout' : 'weekly schedule'}...
-                </p>
+                <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">Creating Your Perfect Workout</h3>
+                <p className="text-gray-600">Our AI is analyzing your preferences and generating a personalized workout plan...</p>
               </div>
             )}
 
-            {/* Single Workout Display */}
-            {generatedPlan && !isGenerating && planType === 'single' && (
+            {generatedPlan && !isGenerating && (
               <div className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+                {generatedPlan.isWeeklyPlan ? (
                   <div>
-                    <h2 className="text-xl font-bold text-[#2C2C2C]">{generatedPlan.name}</h2>
-                    <p className="text-gray-600">{generatedPlan.description}</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={saveWorkout}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                    >
-                      Save Workout
-                    </button>
-                    <button className="bg-[#0074D9] text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center">
-                      <Play className="w-4 h-4 mr-2" />
-                      Start Now
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-6 mb-6 text-sm">
-                  <div className="flex items-center text-gray-600">
-                    <Clock className="w-4 h-4 mr-2" />
-                    {formatDuration(generatedPlan.duration)}
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <Target className="w-4 h-4 mr-2" />
-                    {generatedPlan.difficulty}
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <Dumbbell className="w-4 h-4 mr-2" />
-                    {generatedPlan.equipment === 'none' ? 'No Equipment' : 
-                     generatedPlan.equipment === 'basic' ? 'Basic Equipment' : 'Full Gym'}
-                  </div>
-                </div>
-
-                {/* Warm-up */}
-                <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <h3 className="font-semibold text-[#2C2C2C] mb-2">🔥 Warm-up (5 minutes)</h3>
-                  <p className="text-sm text-gray-600">Light cardio and dynamic stretching to prepare your body</p>
-                </div>
-
-                <div className="space-y-4">
-                  {generatedPlan.exercises.map((exercise, index) => (
-                    <div key={exercise.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-[#2C2C2C]">
-                          {index + 1}. {exercise.name}
-                        </h3>
-                        <span className="text-sm text-gray-500 capitalize">{exercise.difficulty}</span>
-                      </div>
-                      <p className="text-gray-600 text-sm mb-3">{exercise.description}</p>
-                      <div className="flex items-center space-x-4 text-sm">
-                        {exercise.sets && exercise.reps && (
-                          <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded">
-                            {exercise.sets} sets × {exercise.reps} reps
-                          </span>
-                        )}
-                        {exercise.restBetweenSets && (
-                          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                            Rest: {formatRestTime(exercise.restBetweenSets)}
-                          </span>
-                        )}
-                        {exercise.duration && (
-                          <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded">
-                            {formatDuration(exercise.duration)}
-                          </span>
-                        )}
-                        <span className="text-gray-500">
-                          {exercise.muscleGroups.join(', ')}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Cool-down */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h3 className="font-semibold text-[#2C2C2C] mb-2">❄️ Cool-down (5 minutes)</h3>
-                  <p className="text-sm text-gray-600">Static stretching and breathing exercises to help recovery</p>
-                </div>
-              </div>
-            )}
-
-            {/* Weekly Plan Display */}
-            {weeklyPlan.length > 0 && !isGenerating && planType === 'weekly' && (
-              <div className="space-y-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-[#2C2C2C]">Your Weekly Workout Plan</h2>
-                    <button
-                      onClick={() => setWorkoutPlans([...workoutPlans, ...weeklyPlan])}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                    >
-                      Save Weekly Plan
-                    </button>
-                  </div>
-                  <p className="text-gray-600 mb-4">
-                    {weeklySettings.workoutsPerWeek} workout days with recommended rest on: {weeklySettings.restDays.join(', ')}
-                  </p>
-                </div>
-
-                {weeklyPlan.map((plan, index) => (
-                  <div key={plan.id} className="bg-white p-6 rounded-xl shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h3 className="text-lg font-bold text-[#2C2C2C]">{plan.name}</h3>
-                        <p className="text-gray-600">{plan.description}</p>
+                        <h2 className="text-xl font-bold text-[#2C2C2C]">{generatedPlan.name}</h2>
+                        <p className="text-gray-600">{generatedPlan.description}</p>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <div className="flex items-center text-gray-600">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {formatDuration(plan.duration)}
-                        </div>
-                        <button className="bg-[#0074D9] text-white px-3 py-1 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center">
-                          <Play className="w-3 h-3 mr-1" />
-                          Start
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={saveWorkout}
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                        >
+                          Save Weekly Plan
                         </button>
                       </div>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-2 text-sm">
-                      {plan.exercises.slice(0, 4).map((exercise, exerciseIndex) => (
-                        <div key={exercise.id} className="flex items-center p-2 bg-gray-50 rounded">
-                          <span className="w-5 h-5 bg-[#0074D9] text-white text-xs rounded-full flex items-center justify-center mr-2">
-                            {exerciseIndex + 1}
-                          </span>
-                          <span className="text-gray-700">{exercise.name}</span>
+
+                    <div className="grid gap-4">
+                      {generatedPlan.weeklyWorkouts?.map((dayWorkout, dayIndex) => (
+                        <div key={dayWorkout.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-[#2C2C2C]">{dayWorkout.name}</h3>
+                            <div className="flex items-center space-x-4 text-sm">
+                              <div className="flex items-center text-gray-600">
+                                <Clock className="w-4 h-4 mr-1" />
+                                {dayWorkout.duration}min
+                              </div>
+                              <button className="bg-[#0074D9] text-white px-3 py-1 rounded font-medium hover:bg-blue-700 transition-colors flex items-center text-sm">
+                                <Play className="w-3 h-3 mr-1" />
+                                Start
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {dayWorkout.exercises.slice(0, 3).map((exercise, index) => (
+                              <div key={exercise.id} className="flex items-center justify-between text-sm">
+                                <span className="text-gray-700">{index + 1}. {exercise.name}</span>
+                                <div className="flex items-center space-x-2">
+                                  {exercise.sets && exercise.reps && (
+                                    <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded text-xs">
+                                      {exercise.sets}×{exercise.reps}
+                                    </span>
+                                  )}
+                                  {exercise.duration && !exercise.reps && (
+                                    <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded text-xs">
+                                      {formatTime(exercise.duration)}
+                                    </span>
+                                  )}
+                                  {exercise.restTime && (
+                                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                                      Rest: {formatTime(exercise.restTime)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                            {dayWorkout.exercises.length > 3 && (
+                              <div className="text-sm text-gray-500">
+                                +{dayWorkout.exercises.length - 3} more exercises
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
-                      {plan.exercises.length > 4 && (
-                        <div className="flex items-center p-2 text-gray-500">
-                          +{plan.exercises.length - 4} more exercises
-                        </div>
-                      )}
+                    </div>
+
+                    <div className="mt-6 bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-[#2C2C2C] mb-2">Weekly Schedule Overview</h4>
+                      <div className="grid grid-cols-7 gap-2 text-center text-sm">
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
+                          const dayWorkout = generatedPlan.weeklyWorkouts?.find(w => w.dayOfWeek?.startsWith(day));
+                          const isRestDay = getRestDays(weeklyFrequency).some(restDay => restDay.startsWith(day));
+                          
+                          return (
+                            <div key={day} className={`p-2 rounded ${
+                              dayWorkout ? 'bg-[#0074D9] text-white' : 
+                              isRestDay ? 'bg-gray-200 text-gray-600' : 'bg-white border'
+                            }`}>
+                              <div className="font-medium">{day}</div>
+                              <div className="text-xs mt-1">
+                                {dayWorkout ? dayWorkout.focusArea?.replace('-', ' ') : 
+                                 isRestDay ? 'Rest' : 'Free'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-xl font-bold text-[#2C2C2C]">{generatedPlan.name}</h2>
+                        <p className="text-gray-600">{generatedPlan.description}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={saveWorkout}
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                        >
+                          Save Workout
+                        </button>
+                        <button className="bg-[#0074D9] text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center">
+                          <Play className="w-4 h-4 mr-2" />
+                          Start Now
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-6 mb-6 text-sm">
+                      <div className="flex items-center text-gray-600">
+                        <Clock className="w-4 h-4 mr-2" />
+                        {generatedPlan.duration} minutes
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Target className="w-4 h-4 mr-2" />
+                        {generatedPlan.difficulty}
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Dumbbell className="w-4 h-4 mr-2" />
+                        {generatedPlan.equipment === 'none' ? 'No Equipment' : 
+                         generatedPlan.equipment === 'basic' ? 'Basic Equipment' : 'Full Gym'}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {generatedPlan.exercises.map((exercise, index) => (
+                        <div key={exercise.id} className={`border rounded-lg p-4 ${
+                          exercise.isWarmup ? 'border-orange-200 bg-orange-50' :
+                          exercise.isCooldown ? 'border-blue-200 bg-blue-50' :
+                          'border-gray-200'
+                        }`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-[#2C2C2C]">
+                              {exercise.isWarmup ? '🔥 ' : exercise.isCooldown ? '🧘 ' : ''}
+                              {index + 1}. {exercise.name}
+                              {exercise.isWarmup ? ' (Warm-up)' : exercise.isCooldown ? ' (Cool-down)' : ''}
+                            </h3>
+                            <span className="text-sm text-gray-500 capitalize">{exercise.difficulty}</span>
+                          </div>
+                          <p className="text-gray-600 text-sm mb-3">{exercise.description}</p>
+                          <div className="flex items-center space-x-4 text-sm">
+                            {exercise.sets && exercise.reps && (
+                              <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded">
+                                {exercise.sets} sets × {exercise.reps} reps
+                              </span>
+                            )}
+                            {exercise.duration && !exercise.reps && (
+                              <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded">
+                                {formatTime(exercise.duration)}
+                              </span>
+                            )}
+                            {exercise.restTime && !exercise.isWarmup && !exercise.isCooldown && (
+                              <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                Rest: {formatTime(exercise.restTime)}
+                              </span>
+                            )}
+                            <span className="text-gray-500">
+                              {exercise.muscleGroups.join(', ')}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {!generatedPlan && !weeklyPlan.length && !isGenerating && (
+            {!generatedPlan && !isGenerating && (
               <div className="bg-white p-8 rounded-xl shadow-sm text-center">
                 <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[#2C2C2C] mb-2">Ready to Get Started?</h3>
                 <p className="text-gray-600 mb-6">
-                  Customize your preferences on the left and generate your personalized {planType === 'single' ? 'workout' : 'weekly plan'}.
+                  Customize your preferences on the left and generate your personalized {selectedFilters.planType === 'weekly' ? 'weekly plan' : 'workout'}.
                 </p>
+                {selectedFilters.planType === 'weekly' && (
+                  <div className="bg-blue-50 p-4 rounded-lg text-left">
+                    <h4 className="font-semibold text-[#2C2C2C] mb-2">Weekly Plan Benefits:</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Structured progression throughout the week</li>
+                      <li>• Balanced muscle group targeting</li>
+                      <li>• Optimal rest day placement</li>
+                      <li>• Variety to prevent workout boredom</li>
+                      <li>• AI considers your workout history</li>
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
