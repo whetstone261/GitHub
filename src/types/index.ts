@@ -54,3 +54,21 @@ export interface Achievement {
   progress: number;
   target: number;
 }
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  createdAt: Date;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface SignupCredentials {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
