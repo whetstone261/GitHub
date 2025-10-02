@@ -16,7 +16,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
               <img 
                 src="/public/guided-gains-high-resolution-logo.png" 
                 alt="Guided Gains Logo" 
-                className="h-8 w-auto"
+                className="h-12 w-auto"
               />
             </div>
             <button
@@ -130,7 +130,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             <img 
               src="/public/guided-gains-high-resolution-logo.png" 
               alt="Guided Gains Logo" 
-              className="h-8 w-auto brightness-0 invert"
+              className="h-10 w-auto brightness-0 invert"
             />
           </div>
           <p className="text-gray-400">

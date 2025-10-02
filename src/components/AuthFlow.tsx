@@ -198,7 +198,11 @@ const AuthFlow: React.FC<AuthFlowProps> = ({ onAuthSuccess, onBack }) => {
               <div className="w-8 h-8 bg-gradient-to-r from-[#0074D9] to-[#9B59B6] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">GG</span>
               </div>
-              <span className="text-xl font-bold text-[#2C2C2C]">Guided Gains</span>
+              <img 
+                src="/public/guided-gains-high-resolution-logo.png" 
+                alt="Guided Gains Logo" 
+                className="h-10 w-auto"
+              />
             </div>
           </div>
         </div>

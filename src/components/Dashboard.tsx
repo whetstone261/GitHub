@@ -28,7 +28,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
               <img 
                 src="/public/guided-gains-high-resolution-logo.png" 
                 alt="Guided Gains Logo" 
-                className="h-8 w-auto"
+                className="h-12 w-auto"
               />
             </div>
             <div className="flex items-center space-x-4">
