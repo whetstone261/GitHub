@@ -12,7 +12,7 @@ interface WorkoutPlannerProps {
 const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPlans, setWorkoutPlans }) => {
   const [selectedFilters, setSelectedFilters] = useState({
     duration: user.preferredDuration.toString(),
-    focusArea: '',
+    focusAreas: [] as string[],
     difficulty: user.fitnessLevel,
     equipment: user.equipment,
     planType: 'single' // 'single' or 'weekly'
@@ -74,37 +74,23 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   };
 
   // Helper function to get weekly workout schedule
-  const getWeeklySchedule = (frequency: number): { day: string; focus: string }[] => {
-    const schedules: { [key: number]: { day: string; focus: string }[] } = {
-      3: [
-        { day: 'Monday', focus: 'upper-body' },
-        { day: 'Tuesday', focus: 'lower-body' },
-        { day: 'Thursday', focus: 'cardio' },
-        { day: 'Friday', focus: 'full-body' }
-      ],
-      4: [
-        { day: 'Monday', focus: 'upper-body' },
-        { day: 'Tuesday', focus: 'lower-body' },
-        { day: 'Thursday', focus: 'cardio' },
-        { day: 'Friday', focus: 'core' }
-      ],
-      5: [
-        { day: 'Monday', focus: 'upper-body' },
-        { day: 'Tuesday', focus: 'lower-body' },
-        { day: 'Thursday', focus: 'cardio' },
-        { day: 'Friday', focus: 'core' },
-        { day: 'Saturday', focus: 'full-body' }
-      ],
-      6: [
-        { day: 'Monday', focus: 'upper-body' },
-        { day: 'Tuesday', focus: 'lower-body' },
-        { day: 'Wednesday', focus: 'cardio' },
-        { day: 'Thursday', focus: 'upper-body' },
-        { day: 'Friday', focus: 'lower-body' },
-        { day: 'Saturday', focus: 'core' }
-      ]
-    };
-    return schedules[frequency]?.slice(0, frequency) || schedules[3];
+  const getWeeklySchedule = (frequency: number, focusAreas: string[]): { day: string; focus: string }[] => {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    // If specific focus areas are selected, cycle through them
+    if (focusAreas.length > 0) {
+      return days.slice(0, frequency).map((day, index) => ({
+        day,
+        focus: focusAreas[index % focusAreas.length]
+      }));
+    }
+
+    // Default balanced schedule if no focus areas selected
+    const defaultFocusAreas = ['upper-body', 'lower-body', 'cardio', 'core', 'upper-body', 'lower-body'];
+    return days.slice(0, frequency).map((day, index) => ({
+      day,
+      focus: defaultFocusAreas[index]
+    }));
   };
 
   const sampleExercises: Exercise[] = [
@@ -839,7 +825,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'flexibility',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 180,
+      duration: 120,
       description: 'Spinal mobility exercise',
       muscleGroups: ['spine', 'core']
     },
@@ -849,54 +835,204 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       category: 'flexibility',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 180,
+      duration: 120,
       description: 'Full-body stretch from yoga',
       muscleGroups: ['hamstrings', 'calves', 'shoulders', 'back']
     },
     {
       id: '64',
-      name: 'Pigeon Pose',
-      category: 'flexibility',
-      equipment: 'none',
-      difficulty: 'intermediate',
-      duration: 300,
-      description: 'Deep hip flexor stretch',
-      muscleGroups: ['hip-flexors', 'glutes']
-    },
-    {
-      id: '65',
       name: 'Child\'s Pose',
       category: 'flexibility',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 240,
+      duration: 120,
       description: 'Relaxing stretch for back and shoulders',
       muscleGroups: ['back', 'shoulders', 'hips']
     },
     {
-      id: '66',
-      name: 'Hamstring Stretch',
+      id: '65',
+      name: 'Standing Quad Stretch',
       category: 'flexibility',
       equipment: 'none',
       difficulty: 'beginner',
-      duration: 180,
-      description: 'Seated or standing hamstring stretch',
-      muscleGroups: ['hamstrings']
+      duration: 90,
+      description: 'Standing stretch for quadriceps',
+      muscleGroups: ['quads']
     },
     {
-      id: '67',
-      name: 'Shoulder Rolls',
+      id: '66',
+      name: 'Seated Hamstring Stretch',
       category: 'flexibility',
       equipment: 'none',
       difficulty: 'beginner',
       duration: 120,
-      description: 'Shoulder mobility exercise',
-      muscleGroups: ['shoulders', 'upper-back']
+      description: 'Seated forward fold for hamstrings',
+      muscleGroups: ['hamstrings', 'lower-back']
+    },
+    {
+      id: '67',
+      name: 'Standing Calf Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 90,
+      description: 'Wall-assisted calf stretch',
+      muscleGroups: ['calves']
+    },
+    {
+      id: '68',
+      name: 'Arm Circles',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 90,
+      description: 'Dynamic shoulder warmup',
+      muscleGroups: ['shoulders', 'arms']
+    },
+    {
+      id: '69',
+      name: 'Hip Circles',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 90,
+      description: 'Dynamic hip mobility exercise',
+      muscleGroups: ['hips', 'glutes']
+    },
+    {
+      id: '70',
+      name: 'Neck Rolls',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 60,
+      description: 'Gentle neck mobility exercise',
+      muscleGroups: ['neck']
+    },
+    {
+      id: '71',
+      name: 'Torso Twists',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 90,
+      description: 'Standing spinal rotation stretch',
+      muscleGroups: ['obliques', 'spine']
+    },
+    {
+      id: '72',
+      name: 'Tricep Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 90,
+      description: 'Overhead tricep and shoulder stretch',
+      muscleGroups: ['triceps', 'shoulders']
+    },
+    {
+      id: '73',
+      name: 'Chest Doorway Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      description: 'Doorway pec stretch',
+      muscleGroups: ['chest', 'shoulders']
+    },
+    {
+      id: '74',
+      name: 'Butterfly Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      description: 'Seated inner thigh and hip stretch',
+      muscleGroups: ['inner-thighs', 'hips']
+    },
+    {
+      id: '75',
+      name: 'Pigeon Pose',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 180,
+      description: 'Deep hip flexor stretch',
+      muscleGroups: ['hip-flexors', 'glutes']
+    },
+    {
+      id: '76',
+      name: 'Figure-4 Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      description: 'Hip and glute stretch',
+      muscleGroups: ['glutes', 'hips']
+    },
+    {
+      id: '77',
+      name: 'Cobra Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 90,
+      description: 'Back extension stretch',
+      muscleGroups: ['abs', 'hip-flexors', 'spine']
+    },
+    {
+      id: '78',
+      name: 'Side Bend Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 90,
+      description: 'Standing lateral stretch',
+      muscleGroups: ['obliques', 'lats']
+    },
+    {
+      id: '79',
+      name: 'Wrist Circles',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 60,
+      description: 'Wrist mobility exercise',
+      muscleGroups: ['forearms', 'wrists']
+    },
+    {
+      id: '80',
+      name: 'Ankle Circles',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 60,
+      description: 'Ankle mobility exercise',
+      muscleGroups: ['ankles', 'calves']
+    },
+    {
+      id: '81',
+      name: 'Lunge Hip Flexor Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      description: 'Deep hip flexor stretch in lunge position',
+      muscleGroups: ['hip-flexors', 'quads']
+    },
+    {
+      id: '82',
+      name: 'Spinal Twist',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      description: 'Seated spinal rotation stretch',
+      muscleGroups: ['spine', 'obliques', 'back']
     },
 
     // FUNCTIONAL TRAINING
     {
-      id: '68',
+      id: '83',
       name: 'Turkish Get-ups',
       category: 'functional',
       equipment: 'basic',
@@ -908,7 +1044,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['full-body', 'core', 'shoulders']
     },
     {
-      id: '69',
+      id: '84',
       name: 'Farmer\'s Walk',
       category: 'functional',
       equipment: 'basic',
@@ -918,7 +1054,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['grip', 'core', 'traps', 'legs']
     },
     {
-      id: '70',
+      id: '85',
       name: 'Bear Crawl',
       category: 'functional',
       equipment: 'none',
@@ -928,7 +1064,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['full-body', 'core', 'shoulders']
     },
     {
-      id: '71',
+      id: '86',
       name: 'Kettlebell Swings',
       category: 'functional',
       equipment: 'basic',
@@ -940,7 +1076,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['glutes', 'hamstrings', 'core', 'shoulders']
     },
     {
-      id: '72',
+      id: '87',
       name: 'Box Jumps',
       category: 'functional',
       equipment: 'basic',
@@ -954,7 +1090,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
     // GYM MACHINES - CHEST
     {
-      id: '73',
+      id: '116',
       name: 'Chest Press Machine',
       category: 'chest',
       equipment: 'gym',
@@ -1513,20 +1649,16 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
 
       // Enhanced category matching for specific body parts
-      const categoryMatch = 
-        !selectedFilters.focusArea || 
-        selectedFilters.focusArea === '' ||
-        exercise.category === selectedFilters.focusArea ||
-        (selectedFilters.focusArea === 'upper-body' && ['chest', 'back', 'shoulders', 'arms'].includes(exercise.category)) ||
-        (selectedFilters.focusArea === 'lower-body' && ['legs'].includes(exercise.category)) ||
-        (selectedFilters.focusArea === 'core' && exercise.category === 'core') ||
-        (selectedFilters.focusArea === 'cardio' && exercise.category === 'cardio') ||
-        (selectedFilters.focusArea === 'flexibility' && exercise.category === 'flexibility') ||
-        (selectedFilters.focusArea === 'chest' && exercise.category === 'chest') ||
-        (selectedFilters.focusArea === 'back' && exercise.category === 'back') ||
-        (selectedFilters.focusArea === 'shoulders' && exercise.category === 'shoulders') ||
-        (selectedFilters.focusArea === 'arms' && exercise.category === 'arms') ||
-        (selectedFilters.focusArea === 'legs' && exercise.category === 'legs');
+      const categoryMatch =
+        selectedFilters.focusAreas.length === 0 ||
+        selectedFilters.focusAreas.some(focusArea => (
+          exercise.category === focusArea ||
+          (focusArea === 'upper-body' && ['chest', 'back', 'shoulders', 'arms'].includes(exercise.category)) ||
+          (focusArea === 'lower-body' && ['legs'].includes(exercise.category)) ||
+          (focusArea === 'core' && exercise.category === 'core') ||
+          (focusArea === 'cardio' && exercise.category === 'cardio') ||
+          (focusArea === 'flexibility' && exercise.category === 'flexibility')
+        ));
 
       return equipmentMatch && difficultyMatch && categoryMatch;
     });
@@ -1561,14 +1693,16 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       exerciseIndex++;
     }
 
-    // Add warm-up and cool-down exercises
-    const warmupExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(0, 2);
-    const cooldownExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(2, 4);
+    // Add warm-up and cool-down exercises - select random stretches
+    const allStretches = sampleExercises.filter(ex => ex.category === 'flexibility');
+    const shuffledStretches = allStretches.sort(() => 0.5 - Math.random());
+    const warmupExercises = shuffledStretches.slice(0, 2);
+    const cooldownExercises = shuffledStretches.slice(2, 4);
 
     const newPlan: WorkoutPlan = {
       id: Date.now().toString(),
       userId: user.id,
-      name: `${selectedFilters.focusArea || 'Full Body'} Workout`,
+      name: `${selectedFilters.focusAreas.length > 0 ? selectedFilters.focusAreas.map(f => f.charAt(0).toUpperCase() + f.slice(1).replace('-', ' ')).join(' + ') : 'Full Body'} Workout`,
       description: `AI-generated ${parseInt(selectedFilters.duration)}-minute workout tailored to your goals`,
       exercises: [
         ...warmupExercises.map(ex => ({ ...ex, isWarmup: true })),
@@ -1577,7 +1711,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       ],
       duration: parseInt(selectedFilters.duration),
       difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
-      category: selectedFilters.focusArea || 'full-body',
+      category: selectedFilters.focusAreas.length === 1 ? selectedFilters.focusAreas[0] : 'full-body',
       equipment: selectedFilters.equipment,
       createdAt: new Date()
     };
@@ -1586,7 +1720,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   };
 
   const generateWeeklyPlan = () => {
-    const schedule = getWeeklySchedule(weeklyFrequency);
+    const schedule = getWeeklySchedule(weeklyFrequency, selectedFilters.focusAreas);
     const weeklyWorkouts: WorkoutPlan[] = [];
     
     schedule.forEach((dayPlan, index) => {
@@ -1641,8 +1775,10 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         exerciseIndex++;
       }
 
-      const warmupExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(0, 2);
-      const cooldownExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(2, 4);
+      const allStretches = sampleExercises.filter(ex => ex.category === 'flexibility');
+      const shuffledStretches = [...allStretches].sort(() => 0.5 - Math.random());
+      const warmupExercises = shuffledStretches.slice(0, 2);
+      const cooldownExercises = shuffledStretches.slice(2, 4);
 
       const dayWorkout: WorkoutPlan = {
         id: `${Date.now()}-${index}`,
@@ -1669,8 +1805,12 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     const weeklyPlan: WorkoutPlan = {
       id: Date.now().toString(),
       userId: user.id,
-      name: `Weekly Workout Plan - ${weeklyFrequency} Days`,
-      description: `Complete ${weeklyFrequency}-day workout plan with recommended rest days`,
+      name: selectedFilters.focusAreas.length > 0
+        ? `${weeklyFrequency}-Day ${selectedFilters.focusAreas.map(f => f.charAt(0).toUpperCase() + f.slice(1).replace('-', ' ')).join(' + ')} Plan`
+        : `Weekly Workout Plan - ${weeklyFrequency} Days`,
+      description: selectedFilters.focusAreas.length > 0
+        ? `${weeklyFrequency}-day plan focused on ${selectedFilters.focusAreas.map(f => f.replace('-', ' ')).join(', ')}`
+        : `Complete ${weeklyFrequency}-day workout plan with recommended rest days`,
       exercises: [],
       duration: parseInt(selectedFilters.duration),
       difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
@@ -1788,19 +1928,53 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Focus Area</label>
-                <select
-                  value={selectedFilters.focusArea}
-                  onChange={(e) => setSelectedFilters(prev => ({ ...prev, focusArea: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0074D9] focus:border-transparent"
-                >
-                  <option value="">Full Body</option>
-                  <option value="upper-body">Upper Body</option>
-                  <option value="lower-body">Lower Body</option>
-                  <option value="core">Core</option>
-                  <option value="cardio">Cardio</option>
-                  <option value="flexibility">Flexibility</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Focus Areas {selectedFilters.planType === 'weekly' && '(select multiple)'}
+                </label>
+                <div className="space-y-2">
+                  {[
+                    { id: 'upper-body', label: 'Upper Body' },
+                    { id: 'lower-body', label: 'Lower Body' },
+                    { id: 'core', label: 'Core' },
+                    { id: 'cardio', label: 'Cardio' },
+                    { id: 'flexibility', label: 'Flexibility' }
+                  ].map((focus) => (
+                    <button
+                      key={focus.id}
+                      onClick={() => {
+                        setSelectedFilters(prev => {
+                          const isSelected = prev.focusAreas.includes(focus.id);
+                          return {
+                            ...prev,
+                            focusAreas: isSelected
+                              ? prev.focusAreas.filter(f => f !== focus.id)
+                              : prev.planType === 'single'
+                                ? [focus.id]
+                                : [...prev.focusAreas, focus.id]
+                          };
+                        });
+                      }}
+                      className={`w-full p-2 text-sm rounded-lg border text-left transition-colors ${
+                        selectedFilters.focusAreas.includes(focus.id)
+                          ? 'border-[#0074D9] bg-blue-50 text-[#0074D9]'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {focus.label}
+                      {selectedFilters.focusAreas.includes(focus.id) && selectedFilters.planType === 'weekly' && (
+                        <span className="ml-2 text-xs">(selected)</span>
+                      )}
+                    </button>
+                  ))}
+                  {selectedFilters.focusAreas.length > 0 && (
+                    <button
+                      onClick={() => setSelectedFilters(prev => ({ ...prev, focusAreas: [] }))}
+                      className="w-full p-2 text-sm rounded-lg border border-gray-200 hover:border-gray-300 text-gray-600 text-center"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -2048,6 +2222,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                   <div className="bg-blue-50 p-4 rounded-lg text-left">
                     <h4 className="font-semibold text-[#2C2C2C] mb-2">Weekly Plan Benefits:</h4>
                     <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Select multiple focus areas to cycle through</li>
                       <li>• Structured progression throughout the week</li>
                       <li>• Balanced muscle group targeting</li>
                       <li>• Optimal rest day placement</li>
