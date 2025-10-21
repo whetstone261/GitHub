@@ -1,22 +1,15 @@
 import React, { useState } from 'react';
 import LandingPage from './components/LandingPage';
-import AuthFlow from './components/AuthFlow';
 import OnboardingFlow from './components/OnboardingFlow';
 import Dashboard from './components/Dashboard';
 import WorkoutPlanner from './components/WorkoutPlanner';
 import ProgressTracker from './components/ProgressTracker';
-import { User, WorkoutPlan, AuthUser } from './types';
+import { User, WorkoutPlan } from './types';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'auth' | 'onboarding' | 'dashboard' | 'planner' | 'progress'>('landing');
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [currentView, setCurrentView] = useState<'landing' | 'onboarding' | 'dashboard' | 'planner' | 'progress'>('landing');
   const [user, setUser] = useState<User | null>(null);
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
-
-  const handleAuthSuccess = (userData: AuthUser) => {
-    setAuthUser(userData);
-    setCurrentView('onboarding');
-  };
 
   const handleUserCreated = (userData: User) => {
     setUser(userData);
@@ -36,20 +29,13 @@ function App() {
   };
 
   const handleGetStarted = () => {
-    setCurrentView('auth');
-  };
-
-  const handleBackToLanding = () => {
-    setCurrentView('landing');
+    setCurrentView('onboarding');
   };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
       {currentView === 'landing' && (
         <LandingPage onGetStarted={handleGetStarted} />
-      )}
-      {currentView === 'auth' && (
-        <AuthFlow onAuthSuccess={handleAuthSuccess} onBack={handleBackToLanding} />
       )}
       {currentView === 'onboarding' && (
         <OnboardingFlow onComplete={handleUserCreated} />
