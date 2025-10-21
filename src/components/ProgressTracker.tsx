@@ -79,14 +79,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ user, onBack }) => {
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Dashboard
             </button>
-            <div className="flex items-center space-x-4">
-              <img 
-                src="/public/guided-gains-high-resolution-logo.png" 
-                alt="Guided Gains Logo" 
-                className="h-10 w-auto"
-              />
-              <h1 className="text-xl font-semibold text-[#2C2C2C]">Progress Tracker</h1>
-            </div>
+            <h1 className="text-xl font-semibold text-[#2C2C2C]">Progress Tracker</h1>
           </div>
         </div>
       </header>
