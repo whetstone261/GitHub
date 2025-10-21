@@ -77,7 +77,8 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   const getWeeklySchedule = (frequency: number, focusAreas: string[]): { day: string; focus: string }[] => {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    // If specific focus areas are selected, cycle through them
+    // If full-body is selected along with other areas, use all of them
+    // If only full-body is selected, repeat it for all days
     if (focusAreas.length > 0) {
       return days.slice(0, frequency).map((day, index) => ({
         day,
@@ -1651,6 +1652,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       // Enhanced category matching for specific body parts
       const categoryMatch =
         selectedFilters.focusAreas.length === 0 ||
+        selectedFilters.focusAreas.includes('full-body') ||
         selectedFilters.focusAreas.some(focusArea => (
           exercise.category === focusArea ||
           (focusArea === 'upper-body' && ['chest', 'back', 'shoulders', 'arms'].includes(exercise.category)) ||
@@ -1929,10 +1931,11 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Focus Areas {selectedFilters.planType === 'weekly' && '(select multiple)'}
+                  Focus Areas (select multiple)
                 </label>
                 <div className="space-y-2">
                   {[
+                    { id: 'full-body', label: 'Full Body' },
                     { id: 'upper-body', label: 'Upper Body' },
                     { id: 'lower-body', label: 'Lower Body' },
                     { id: 'core', label: 'Core' },
@@ -1948,28 +1951,28 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                             ...prev,
                             focusAreas: isSelected
                               ? prev.focusAreas.filter(f => f !== focus.id)
-                              : prev.planType === 'single'
-                                ? [focus.id]
-                                : [...prev.focusAreas, focus.id]
+                              : [...prev.focusAreas, focus.id]
                           };
                         });
                       }}
                       className={`w-full p-2 text-sm rounded-lg border text-left transition-colors ${
                         selectedFilters.focusAreas.includes(focus.id)
-                          ? 'border-[#0074D9] bg-blue-50 text-[#0074D9]'
+                          ? 'border-[#0074D9] bg-blue-50 text-[#0074D9] font-medium'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      {focus.label}
-                      {selectedFilters.focusAreas.includes(focus.id) && selectedFilters.planType === 'weekly' && (
-                        <span className="ml-2 text-xs">(selected)</span>
-                      )}
+                      <div className="flex items-center justify-between">
+                        <span>{focus.label}</span>
+                        {selectedFilters.focusAreas.includes(focus.id) && (
+                          <span className="text-[#0074D9]">✓</span>
+                        )}
+                      </div>
                     </button>
                   ))}
                   {selectedFilters.focusAreas.length > 0 && (
                     <button
                       onClick={() => setSelectedFilters(prev => ({ ...prev, focusAreas: [] }))}
-                      className="w-full p-2 text-sm rounded-lg border border-gray-200 hover:border-gray-300 text-gray-600 text-center"
+                      className="w-full p-2 text-sm rounded-lg border border-gray-200 hover:border-red-300 hover:text-red-600 text-gray-600 text-center transition-colors"
                     >
                       Clear All
                     </button>
