@@ -108,10 +108,10 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   };
 
   const sampleExercises: Exercise[] = [
-    // CARDIO EXERCISES
+    // RUNNING/CARDIO EXERCISES
     {
       id: '1',
-      name: 'Running (Outdoor)',
+      name: 'Outdoor Running',
       category: 'cardio',
       equipment: 'none',
       difficulty: 'beginner',
@@ -131,7 +131,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     },
     {
       id: '3',
-      name: 'High-Intensity Interval Running',
+      name: 'HIIT Running',
       category: 'cardio',
       equipment: 'none',
       difficulty: 'advanced',
@@ -141,43 +141,37 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     },
     {
       id: '4',
-      name: 'Jumping Jacks',
+      name: 'Treadmill Intervals',
       category: 'cardio',
-      equipment: 'none',
-      difficulty: 'beginner',
-      duration: 180,
-      reps: 50,
-      sets: 3,
-      description: 'Full-body cardio exercise to elevate heart rate',
-      muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 1200, // 20 minutes
+      description: 'Alternating between high and low intensity on treadmill',
+      muscleGroups: ['legs', 'glutes', 'core', 'cardiovascular']
     },
     {
       id: '5',
-      name: 'Burpees',
+      name: 'Incline Walking',
       category: 'cardio',
-      equipment: 'none',
-      difficulty: 'intermediate',
-      duration: 240,
-      reps: 15,
-      sets: 4,
-      description: 'Full-body explosive movement combining squat, plank, and jump',
-      muscleGroups: ['full-body', 'cardiovascular']
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 1800, // 30 minutes
+      description: 'Brisk walking on inclined treadmill for low-impact cardio',
+      muscleGroups: ['legs', 'glutes', 'cardiovascular']
     },
     {
       id: '6',
-      name: 'Mountain Climbers',
+      name: 'Jump Rope',
       category: 'cardio',
-      equipment: 'none',
+      equipment: 'basic',
       difficulty: 'intermediate',
-      duration: 180,
-      reps: 30,
-      sets: 3,
-      description: 'Dynamic core and cardio exercise in plank position',
-      muscleGroups: ['core', 'shoulders', 'legs', 'cardiovascular']
+      duration: 600, // 10 minutes
+      description: 'High-intensity cardio with coordination benefits',
+      muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
     },
     {
       id: '7',
-      name: 'Cycling (Stationary)',
+      name: 'Stationary Bike',
       category: 'cardio',
       equipment: 'gym',
       difficulty: 'beginner',
@@ -197,16 +191,6 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     },
     {
       id: '9',
-      name: 'Jump Rope',
-      category: 'cardio',
-      equipment: 'basic',
-      difficulty: 'intermediate',
-      duration: 600, // 10 minutes
-      description: 'High-intensity cardio with coordination benefits',
-      muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
-    },
-    {
-      id: '10',
       name: 'Elliptical Machine',
       category: 'cardio',
       equipment: 'gym',
@@ -215,72 +199,96 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       description: 'Low-impact full-body cardio workout',
       muscleGroups: ['legs', 'arms', 'core', 'cardiovascular']
     },
-
-    // UPPER BODY STRENGTH
+    {
+      id: '10',
+      name: 'Jumping Jacks',
+      category: 'cardio',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 50,
+      sets: 3,
+      description: 'Full-body cardio exercise to elevate heart rate',
+      muscleGroups: ['legs', 'shoulders', 'core', 'cardiovascular']
+    },
     {
       id: '11',
+      name: 'Burpees',
+      category: 'cardio',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 15,
+      sets: 4,
+      description: 'Full-body explosive movement combining squat, plank, and jump',
+      muscleGroups: ['full-body', 'cardiovascular']
+    },
+    {
+      id: '12',
+      name: 'Mountain Climbers',
+      category: 'cardio',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 30,
+      sets: 3,
+      description: 'Dynamic core and cardio exercise in plank position',
+      muscleGroups: ['core', 'shoulders', 'legs', 'cardiovascular']
+    },
+
+    // CHEST EXERCISES
+    {
+      id: '13',
       name: 'Push-ups',
-      category: 'strength',
+      category: 'chest',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 10,
+      sets: 4,
+      description: 'Classic push-up targeting chest, shoulders, and triceps',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '14',
+      name: 'Incline Push-ups',
+      category: 'chest',
       equipment: 'none',
       difficulty: 'beginner',
       duration: 120,
       reps: 12,
       sets: 3,
-      description: 'Classic push-up targeting chest, shoulders, and triceps',
+      description: 'Easier push-up variation using elevated surface',
       muscleGroups: ['chest', 'shoulders', 'triceps']
     },
     {
-      id: '12',
+      id: '15',
+      name: 'Decline Push-ups',
+      category: 'chest',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 8,
+      sets: 4,
+      description: 'Advanced push-up with feet elevated',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '16',
       name: 'Diamond Push-ups',
-      category: 'strength',
+      category: 'chest',
       equipment: 'none',
       difficulty: 'advanced',
       duration: 120,
-      reps: 8,
-      sets: 3,
+      reps: 6,
+      sets: 4,
       description: 'Advanced push-up variation targeting triceps',
       muscleGroups: ['triceps', 'chest', 'shoulders']
     },
     {
-      id: '13',
-      name: 'Pike Push-ups',
-      category: 'strength',
-      equipment: 'none',
-      difficulty: 'intermediate',
-      duration: 120,
-      reps: 10,
-      sets: 3,
-      description: 'Shoulder-focused push-up variation',
-      muscleGroups: ['shoulders', 'triceps', 'core']
-    },
-    {
-      id: '14',
-      name: 'Pull-ups',
-      category: 'strength',
-      equipment: 'basic',
-      difficulty: 'intermediate',
-      duration: 180,
-      reps: 8,
-      sets: 3,
-      description: 'Upper body pulling exercise for back and biceps',
-      muscleGroups: ['back', 'biceps', 'shoulders']
-    },
-    {
-      id: '15',
-      name: 'Chin-ups',
-      category: 'strength',
-      equipment: 'basic',
-      difficulty: 'intermediate',
-      duration: 180,
-      reps: 8,
-      sets: 3,
-      description: 'Bicep-focused pulling exercise',
-      muscleGroups: ['biceps', 'back', 'shoulders']
-    },
-    {
-      id: '16',
+      id: '17',
       name: 'Dumbbell Bench Press',
-      category: 'strength',
+      category: 'chest',
       equipment: 'basic',
       difficulty: 'intermediate',
       duration: 240,
@@ -290,9 +298,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['chest', 'shoulders', 'triceps']
     },
     {
-      id: '17',
+      id: '18',
       name: 'Barbell Bench Press',
-      category: 'strength',
+      category: 'chest',
       equipment: 'gym',
       difficulty: 'intermediate',
       duration: 300,
@@ -302,21 +310,71 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['chest', 'shoulders', 'triceps']
     },
     {
-      id: '18',
+      id: '19',
+      name: 'Chest Flyes',
+      category: 'chest',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 12,
+      sets: 3,
+      description: 'Isolation exercise for chest development',
+      muscleGroups: ['chest']
+    },
+    {
+      id: '20',
+      name: 'Chest Dips',
+      category: 'chest',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 10,
+      sets: 3,
+      description: 'Bodyweight exercise targeting lower chest',
+      muscleGroups: ['chest', 'triceps', 'shoulders']
+    },
+
+    // BACK EXERCISES
+    {
+      id: '21',
+      name: 'Pull-ups',
+      category: 'back',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 8,
+      sets: 4,
+      description: 'Upper body pulling exercise for back and biceps',
+      muscleGroups: ['back', 'biceps', 'shoulders']
+    },
+    {
+      id: '22',
+      name: 'Chin-ups',
+      category: 'back',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 8,
+      sets: 3,
+      description: 'Bicep-focused pulling exercise',
+      muscleGroups: ['biceps', 'back', 'shoulders']
+    },
+    {
+      id: '23',
       name: 'Dumbbell Rows',
-      category: 'strength',
+      category: 'back',
       equipment: 'basic',
       difficulty: 'beginner',
       duration: 180,
       reps: 12,
-      sets: 3,
+      sets: 4,
       description: 'Back strengthening exercise with dumbbells',
       muscleGroups: ['back', 'biceps', 'rear-delts']
     },
     {
-      id: '19',
+      id: '24',
       name: 'Barbell Rows',
-      category: 'strength',
+      category: 'back',
       equipment: 'gym',
       difficulty: 'intermediate',
       duration: 240,
@@ -326,21 +384,59 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['back', 'biceps', 'rear-delts']
     },
     {
-      id: '20',
+      id: '25',
       name: 'Lat Pulldowns',
-      category: 'strength',
+      category: 'back',
       equipment: 'gym',
       difficulty: 'beginner',
       duration: 180,
       reps: 12,
-      sets: 3,
+      sets: 4,
       description: 'Machine-based back exercise',
       muscleGroups: ['lats', 'biceps', 'rear-delts']
     },
     {
-      id: '21',
+      id: '26',
+      name: 'Seated Cable Rows',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Cable machine back exercise',
+      muscleGroups: ['back', 'biceps', 'rear-delts']
+    },
+    {
+      id: '27',
+      name: 'T-Bar Rows',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 4,
+      description: 'Heavy compound back exercise',
+      muscleGroups: ['back', 'biceps', 'rear-delts']
+    },
+
+    // SHOULDER EXERCISES
+    {
+      id: '28',
+      name: 'Pike Push-ups',
+      category: 'shoulders',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 10,
+      sets: 4,
+      description: 'Shoulder-focused push-up variation',
+      muscleGroups: ['shoulders', 'triceps', 'core']
+    },
+    {
+      id: '29',
       name: 'Overhead Press',
-      category: 'strength',
+      category: 'shoulders',
       equipment: 'basic',
       difficulty: 'intermediate',
       duration: 240,
@@ -350,9 +446,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['shoulders', 'triceps', 'core']
     },
     {
-      id: '22',
+      id: '30',
       name: 'Lateral Raises',
-      category: 'strength',
+      category: 'shoulders',
       equipment: 'basic',
       difficulty: 'beginner',
       duration: 120,
@@ -362,71 +458,169 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['shoulders']
     },
     {
-      id: '23',
+      id: '31',
+      name: 'Front Raises',
+      category: 'shoulders',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 12,
+      sets: 3,
+      description: 'Front deltoid isolation exercise',
+      muscleGroups: ['shoulders']
+    },
+    {
+      id: '32',
+      name: 'Rear Delt Flyes',
+      category: 'shoulders',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 15,
+      sets: 3,
+      description: 'Rear deltoid strengthening exercise',
+      muscleGroups: ['rear-delts', 'shoulders']
+    },
+    {
+      id: '33',
+      name: 'Arnold Press',
+      category: 'shoulders',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 10,
+      sets: 4,
+      description: 'Complex shoulder exercise with rotation',
+      muscleGroups: ['shoulders', 'triceps']
+    },
+    {
+      id: '34',
+      name: 'Upright Rows',
+      category: 'shoulders',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 12,
+      sets: 3,
+      description: 'Compound shoulder and trap exercise',
+      muscleGroups: ['shoulders', 'traps']
+    },
+
+    // ARM EXERCISES (BICEPS/TRICEPS)
+    {
+      id: '35',
+      name: 'Bicep Curls',
+      category: 'arms',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 15,
+      sets: 4,
+      description: 'Isolation exercise for bicep development',
+      muscleGroups: ['biceps']
+    },
+    {
+      id: '36',
+      name: 'Hammer Curls',
+      category: 'arms',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 12,
+      sets: 4,
+      description: 'Neutral grip bicep exercise',
+      muscleGroups: ['biceps', 'forearms']
+    },
+    {
+      id: '37',
       name: 'Tricep Dips',
-      category: 'strength',
+      category: 'arms',
       equipment: 'none',
       difficulty: 'intermediate',
       duration: 120,
       reps: 12,
-      sets: 3,
+      sets: 4,
       description: 'Bodyweight tricep exercise using chair or bench',
       muscleGroups: ['triceps', 'shoulders', 'chest']
     },
     {
-      id: '24',
-      name: 'Bicep Curls',
-      category: 'strength',
+      id: '38',
+      name: 'Tricep Extensions',
+      category: 'arms',
       equipment: 'basic',
       difficulty: 'beginner',
       duration: 120,
-      reps: 15,
-      sets: 3,
-      description: 'Isolation exercise for bicep development',
+      reps: 12,
+      sets: 4,
+      description: 'Isolation exercise for tricep development',
+      muscleGroups: ['triceps']
+    },
+    {
+      id: '39',
+      name: 'Close-Grip Push-ups',
+      category: 'arms',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 10,
+      sets: 4,
+      description: 'Push-up variation targeting triceps',
+      muscleGroups: ['triceps', 'chest']
+    },
+    {
+      id: '40',
+      name: 'Preacher Curls',
+      category: 'arms',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 10,
+      sets: 4,
+      description: 'Isolated bicep exercise using preacher bench',
       muscleGroups: ['biceps']
     },
 
-    // LOWER BODY STRENGTH
+    // LEG EXERCISES
     {
-      id: '25',
+      id: '41',
       name: 'Squats',
-      category: 'strength',
+      category: 'legs',
       equipment: 'none',
       difficulty: 'beginner',
       duration: 120,
       reps: 15,
-      sets: 3,
+      sets: 4,
       description: 'Bodyweight squats for lower body strength',
       muscleGroups: ['quads', 'glutes', 'hamstrings']
     },
     {
-      id: '26',
+      id: '42',
       name: 'Jump Squats',
-      category: 'strength',
+      category: 'legs',
       equipment: 'none',
       difficulty: 'intermediate',
       duration: 120,
       reps: 12,
-      sets: 3,
+      sets: 4,
       description: 'Explosive squat variation for power',
       muscleGroups: ['quads', 'glutes', 'hamstrings', 'calves']
     },
     {
-      id: '27',
+      id: '43',
       name: 'Goblet Squats',
-      category: 'strength',
+      category: 'legs',
       equipment: 'basic',
       difficulty: 'beginner',
       duration: 180,
       reps: 12,
-      sets: 3,
+      sets: 4,
       description: 'Dumbbell squat variation for added resistance',
       muscleGroups: ['quads', 'glutes', 'hamstrings', 'core']
     },
     {
-      id: '28',
+      id: '44',
       name: 'Barbell Back Squats',
-      category: 'strength',
+      category: 'legs',
       equipment: 'gym',
       difficulty: 'intermediate',
       duration: 300,
@@ -436,45 +630,45 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['quads', 'glutes', 'hamstrings', 'core']
     },
     {
-      id: '29',
+      id: '45',
       name: 'Lunges',
-      category: 'strength',
+      category: 'legs',
       equipment: 'none',
       difficulty: 'beginner',
       duration: 120,
       reps: 12,
-      sets: 3,
+      sets: 4,
       description: 'Unilateral leg exercise for balance and strength',
       muscleGroups: ['quads', 'glutes', 'hamstrings', 'calves']
     },
     {
-      id: '30',
+      id: '46',
       name: 'Walking Lunges',
-      category: 'strength',
+      category: 'legs',
       equipment: 'none',
       difficulty: 'intermediate',
       duration: 180,
       reps: 20,
-      sets: 3,
+      sets: 4,
       description: 'Dynamic lunge variation',
       muscleGroups: ['quads', 'glutes', 'hamstrings', 'calves']
     },
     {
-      id: '31',
+      id: '47',
       name: 'Bulgarian Split Squats',
-      category: 'strength',
+      category: 'legs',
       equipment: 'none',
       difficulty: 'intermediate',
       duration: 180,
       reps: 10,
-      sets: 3,
+      sets: 4,
       description: 'Single-leg squat variation',
       muscleGroups: ['quads', 'glutes', 'hamstrings']
     },
     {
-      id: '32',
+      id: '48',
       name: 'Deadlifts',
-      category: 'strength',
+      category: 'legs',
       equipment: 'gym',
       difficulty: 'intermediate',
       duration: 300,
@@ -484,45 +678,45 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['hamstrings', 'glutes', 'back', 'core']
     },
     {
-      id: '33',
+      id: '49',
       name: 'Romanian Deadlifts',
-      category: 'strength',
+      category: 'legs',
       equipment: 'basic',
       difficulty: 'intermediate',
       duration: 240,
       reps: 10,
-      sets: 3,
+      sets: 4,
       description: 'Hamstring-focused deadlift variation',
       muscleGroups: ['hamstrings', 'glutes', 'back']
     },
     {
-      id: '34',
+      id: '50',
       name: 'Calf Raises',
-      category: 'strength',
+      category: 'legs',
       equipment: 'none',
       difficulty: 'beginner',
       duration: 120,
       reps: 20,
-      sets: 3,
+      sets: 4,
       description: 'Isolation exercise for calf muscles',
       muscleGroups: ['calves']
     },
     {
-      id: '35',
+      id: '51',
       name: 'Hip Thrusts',
-      category: 'strength',
+      category: 'legs',
       equipment: 'none',
       difficulty: 'beginner',
       duration: 120,
       reps: 15,
-      sets: 3,
+      sets: 4,
       description: 'Glute-focused exercise',
       muscleGroups: ['glutes', 'hamstrings']
     },
     {
-      id: '36',
+      id: '52',
       name: 'Leg Press',
-      category: 'strength',
+      category: 'legs',
       equipment: 'gym',
       difficulty: 'beginner',
       duration: 240,
@@ -534,9 +728,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
     // CORE EXERCISES
     {
-      id: '37',
+      id: '53',
       name: 'Plank',
-      category: 'strength',
+      category: 'core',
       equipment: 'none',
       difficulty: 'beginner',
       duration: 180,
@@ -544,9 +738,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['core', 'shoulders']
     },
     {
-      id: '38',
+      id: '54',
       name: 'Side Plank',
-      category: 'strength',
+      category: 'core',
       equipment: 'none',
       difficulty: 'intermediate',
       duration: 120,
@@ -554,16 +748,417 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       muscleGroups: ['core', 'obliques', 'shoulders']
     },
     {
-      id: '39',
+      id: '55',
       name: 'Crunches',
-      category: 'strength',
+      category: 'core',
       equipment: 'none',
       difficulty: 'beginner',
       duration: 120,
       reps: 20,
-      sets: 3,
+      sets: 4,
       description: 'Basic abdominal exercise',
       muscleGroups: ['abs']
+    },
+    {
+      id: '56',
+      name: 'Bicycle Crunches',
+      category: 'core',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 30,
+      sets: 4,
+      description: 'Dynamic core exercise targeting obliques',
+      muscleGroups: ['abs', 'obliques']
+    },
+    {
+      id: '57',
+      name: 'Russian Twists',
+      category: 'core',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 30,
+      sets: 4,
+      description: 'Rotational core exercise',
+      muscleGroups: ['obliques', 'abs']
+    },
+    {
+      id: '58',
+      name: 'Dead Bug',
+      category: 'core',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 10,
+      sets: 4,
+      description: 'Core stability exercise',
+      muscleGroups: ['core', 'hip-flexors']
+    },
+    {
+      id: '59',
+      name: 'Hanging Leg Raises',
+      category: 'core',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 120,
+      reps: 10,
+      sets: 4,
+      description: 'Advanced core exercise using pull-up bar',
+      muscleGroups: ['abs', 'hip-flexors']
+    },
+    {
+      id: '60',
+      name: 'Ab Wheel Rollouts',
+      category: 'core',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 120,
+      reps: 8,
+      sets: 4,
+      description: 'Advanced core strengthening exercise',
+      muscleGroups: ['core', 'shoulders']
+    },
+    {
+      id: '61',
+      name: 'Mountain Climbers',
+      category: 'core',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 30,
+      sets: 4,
+      description: 'Dynamic core and cardio exercise',
+      muscleGroups: ['core', 'shoulders', 'legs']
+    },
+
+    // FLEXIBILITY & MOBILITY
+    {
+      id: '62',
+      name: 'Cat-Cow Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 180,
+      description: 'Spinal mobility exercise',
+      muscleGroups: ['spine', 'core']
+    },
+    {
+      id: '63',
+      name: 'Downward Dog',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 180,
+      description: 'Full-body stretch from yoga',
+      muscleGroups: ['hamstrings', 'calves', 'shoulders', 'back']
+    },
+    {
+      id: '64',
+      name: 'Pigeon Pose',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 300,
+      description: 'Deep hip flexor stretch',
+      muscleGroups: ['hip-flexors', 'glutes']
+    },
+    {
+      id: '65',
+      name: 'Child\'s Pose',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 240,
+      description: 'Relaxing stretch for back and shoulders',
+      muscleGroups: ['back', 'shoulders', 'hips']
+    },
+    {
+      id: '66',
+      name: 'Hamstring Stretch',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 180,
+      description: 'Seated or standing hamstring stretch',
+      muscleGroups: ['hamstrings']
+    },
+    {
+      id: '67',
+      name: 'Shoulder Rolls',
+      category: 'flexibility',
+      equipment: 'none',
+      difficulty: 'beginner',
+      duration: 120,
+      description: 'Shoulder mobility exercise',
+      muscleGroups: ['shoulders', 'upper-back']
+    },
+
+    // FUNCTIONAL TRAINING
+    {
+      id: '68',
+      name: 'Turkish Get-ups',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 300,
+      reps: 5,
+      sets: 3,
+      description: 'Complex full-body movement pattern',
+      muscleGroups: ['full-body', 'core', 'shoulders']
+    },
+    {
+      id: '69',
+      name: 'Farmer\'s Walk',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      description: 'Functional carrying exercise',
+      muscleGroups: ['grip', 'core', 'traps', 'legs']
+    },
+    {
+      id: '70',
+      name: 'Bear Crawl',
+      category: 'functional',
+      equipment: 'none',
+      difficulty: 'intermediate',
+      duration: 180,
+      description: 'Quadrupedal movement pattern',
+      muscleGroups: ['full-body', 'core', 'shoulders']
+    },
+    {
+      id: '71',
+      name: 'Kettlebell Swings',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 20,
+      sets: 4,
+      description: 'Explosive hip hinge movement',
+      muscleGroups: ['glutes', 'hamstrings', 'core', 'shoulders']
+    },
+    {
+      id: '72',
+      name: 'Box Jumps',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 10,
+      sets: 3,
+      description: 'Explosive lower body exercise',
+      muscleGroups: ['legs', 'glutes', 'calves']
+    }
+  ];
+
+  const generateWorkout = () => {
+    setIsGenerating(true);
+    
+    // Simulate AI generation delay
+    setTimeout(() => {
+      if (selectedFilters.planType === 'weekly') {
+        generateWeeklyPlan();
+      } else {
+        generateSingleWorkout();
+      }
+      setIsGenerating(false);
+    }, 2000);
+  };
+
+  const generateSingleWorkout = () => {
+    const targetDuration = parseInt(selectedFilters.duration) * 60; // Convert to seconds
+    const warmupTime = 5 * 60; // 5 minutes
+    const cooldownTime = 5 * 60; // 5 minutes
+    const exerciseTime = targetDuration - warmupTime - cooldownTime;
+    
+    // Get underused muscle groups for better variety
+    const underusedMuscles = getUnderusedMuscleGroups();
+    
+    // Filter exercises based on user equipment and difficulty
+    const filteredExercises = sampleExercises.filter(exercise => {
+      const equipmentMatch = 
+        (selectedFilters.equipment === 'none' && exercise.equipment === 'none') ||
+        (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
+        (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
+      
+      const difficultyMatch = 
+        exercise.difficulty === selectedFilters.difficulty ||
+        (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
+        (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
+
+      // Enhanced category matching for specific body parts
+      const categoryMatch = 
+        !selectedFilters.focusArea || 
+        selectedFilters.focusArea === '' ||
+        exercise.category === selectedFilters.focusArea ||
+        (selectedFilters.focusArea === 'upper-body' && ['chest', 'back', 'shoulders', 'arms'].includes(exercise.category)) ||
+        (selectedFilters.focusArea === 'lower-body' && ['legs'].includes(exercise.category)) ||
+        (selectedFilters.focusArea === 'core' && exercise.category === 'core') ||
+        (selectedFilters.focusArea === 'cardio' && exercise.category === 'cardio') ||
+        (selectedFilters.focusArea === 'flexibility' && exercise.category === 'flexibility') ||
+        (selectedFilters.focusArea === 'chest' && exercise.category === 'chest') ||
+        (selectedFilters.focusArea === 'back' && exercise.category === 'back') ||
+        (selectedFilters.focusArea === 'shoulders' && exercise.category === 'shoulders') ||
+        (selectedFilters.focusArea === 'arms' && exercise.category === 'arms') ||
+        (selectedFilters.focusArea === 'legs' && exercise.category === 'legs');
+
+      return equipmentMatch && difficultyMatch && categoryMatch;
+    });
+
+    // Prioritize exercises that target underused muscle groups
+    const prioritizedExercises = filteredExercises.sort((a, b) => {
+      const aTargetsUnderused = underusedMuscles.some(muscle => a.muscleGroups.includes(muscle));
+      const bTargetsUnderused = underusedMuscles.some(muscle => b.muscleGroups.includes(muscle));
+      if (aTargetsUnderused && !bTargetsUnderused) return -1;
+      if (!aTargetsUnderused && bTargetsUnderused) return 1;
+      return 0.5 - Math.random();
+    });
+
+    // Select exercises to fill the target time
+    const selectedExercises: Exercise[] = [];
+    let currentTime = 0;
+    let exerciseIndex = 0;
+
+    while (currentTime < exerciseTime && exerciseIndex < prioritizedExercises.length) {
+      const exercise = prioritizedExercises[exerciseIndex];
+      const exerciseDuration = exercise.duration || 120; // Default 2 minutes if not specified
+      const restTime = getRestTime(selectedFilters.difficulty, exercise.category);
+      const totalExerciseTime = exerciseDuration + restTime;
+
+      if (currentTime + totalExerciseTime <= exerciseTime) {
+        selectedExercises.push({
+          ...exercise,
+          restTime: restTime
+        });
+        currentTime += totalExerciseTime;
+      }
+      exerciseIndex++;
+    }
+
+    // Add warm-up and cool-down exercises
+    const warmupExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(0, 2);
+    const cooldownExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(2, 4);
+
+    const newPlan: WorkoutPlan = {
+      id: Date.now().toString(),
+      userId: user.id,
+      name: `${selectedFilters.focusArea || 'Full Body'} Workout`,
+      description: `AI-generated ${parseInt(selectedFilters.duration)}-minute workout tailored to your goals`,
+      exercises: [
+        ...warmupExercises.map(ex => ({ ...ex, isWarmup: true })),
+        ...selectedExercises,
+        ...cooldownExercises.map(ex => ({ ...ex, isCooldown: true }))
+      ],
+      duration: parseInt(selectedFilters.duration),
+      difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
+      category: selectedFilters.focusArea || 'full-body',
+      equipment: selectedFilters.equipment,
+      createdAt: new Date()
+    };
+
+    setGeneratedPlan(newPlan);
+  };
+
+  const generateWeeklyPlan = () => {
+    const schedule = getWeeklySchedule(weeklyFrequency);
+    const weeklyWorkouts: WorkoutPlan[] = [];
+    
+    schedule.forEach((dayPlan, index) => {
+      const targetDuration = parseInt(selectedFilters.duration) * 60;
+      const warmupTime = 5 * 60;
+      const cooldownTime = 5 * 60;
+      const exerciseTime = targetDuration - warmupTime - cooldownTime;
+      
+      // Filter exercises for this day's focus
+      const filteredExercises = sampleExercises.filter(exercise => {
+        const equipmentMatch = 
+          (selectedFilters.equipment === 'none' && exercise.equipment === 'none') ||
+          (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
+          (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
+        
+        const difficultyMatch = 
+          exercise.difficulty === selectedFilters.difficulty ||
+          (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
+          (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
+
+        // Enhanced focus matching for specific body parts
+        const focusMatch = 
+          exercise.category === dayPlan.focus ||
+          (dayPlan.focus === 'upper-body' && ['chest', 'back', 'shoulders', 'arms'].includes(exercise.category)) ||
+          (dayPlan.focus === 'lower-body' && ['legs'].includes(exercise.category)) ||
+          (dayPlan.focus === 'core' && exercise.category === 'core') ||
+          (dayPlan.focus === 'cardio' && exercise.category === 'cardio') ||
+          (dayPlan.focus === 'full-body');
+
+        return equipmentMatch && difficultyMatch && focusMatch;
+      });
+
+      // Select exercises for this day
+      const shuffled = [...filteredExercises].sort(() => 0.5 - Math.random());
+      const selectedExercises: Exercise[] = [];
+      let currentTime = 0;
+      let exerciseIndex = 0;
+
+      while (currentTime < exerciseTime && exerciseIndex < shuffled.length) {
+        const exercise = shuffled[exerciseIndex];
+        const exerciseDuration = exercise.duration || 120;
+        const restTime = getRestTime(selectedFilters.difficulty, exercise.category);
+        const totalExerciseTime = exerciseDuration + restTime;
+
+        if (currentTime + totalExerciseTime <= exerciseTime) {
+          selectedExercises.push({
+            ...exercise,
+            restTime: restTime
+          });
+          currentTime += totalExerciseTime;
+        }
+        exerciseIndex++;
+      }
+
+      const warmupExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(0, 2);
+      const cooldownExercises = sampleExercises.filter(ex => ex.category === 'flexibility').slice(2, 4);
+
+      const dayWorkout: WorkoutPlan = {
+        id: `${Date.now()}-${index}`,
+        userId: user.id,
+        name: `${dayPlan.day} - ${dayPlan.focus.charAt(0).toUpperCase() + dayPlan.focus.slice(1).replace('-', ' ')} Focus`,
+        description: `${parseInt(selectedFilters.duration)}-minute ${dayPlan.focus} workout for ${dayPlan.day}`,
+        exercises: [
+          ...warmupExercises.map(ex => ({ ...ex, isWarmup: true })),
+          ...selectedExercises,
+          ...cooldownExercises.map(ex => ({ ...ex, isCooldown: true }))
+        ],
+        duration: parseInt(selectedFilters.duration),
+        difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
+        category: dayPlan.focus,
+        equipment: selectedFilters.equipment,
+        dayOfWeek: dayPlan.day,
+        focusArea: dayPlan.focus,
+        createdAt: new Date()
+      };
+
+      weeklyWorkouts.push(dayWorkout);
+    });
+
+    const weeklyPlan: WorkoutPlan = {
+      id: Date.now().toString(),
+      userId: user.id,
+      name: `Weekly Workout Plan - ${weeklyFrequency} Days`,
+      description: `Complete ${weeklyFrequency}-day workout plan with recommended rest days`,
+      exercises: [],
+      duration: parseInt(selectedFilters.duration),
+      difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
+      category: 'weekly-plan',
+      equipment: selectedFilters.equipment,
+      isWeeklyPlan: true,
+      weeklyWorkouts: weeklyWorkouts,
+      createdAt: new Date()
+    };
+
+    setGeneratedPlan(weeklyPlan);
+  };
     },
     {
       id: '40',
@@ -1172,7 +1767,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                           </div>
                           
                           <div className="space-y-2">
-                            {dayWorkout.exercises.slice(0, 3).map((exercise, index) => (
+                            {dayWorkout.exercises.map((exercise, index) => (
                               <div key={exercise.id} className="flex items-center justify-between text-sm">
                                 <span className="text-gray-700">{index + 1}. {exercise.name}</span>
                                 <div className="flex items-center space-x-2">
@@ -1194,11 +1789,6 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                                 </div>
                               </div>
                             ))}
-                            {dayWorkout.exercises.length > 3 && (
-                              <div className="text-sm text-gray-500">
-                                +{dayWorkout.exercises.length - 3} more exercises
-                              </div>
-                            )}
                           </div>
                         </div>
                       ))}
