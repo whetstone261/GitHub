@@ -950,6 +950,530 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       sets: 3,
       description: 'Explosive lower body exercise',
       muscleGroups: ['legs', 'glutes', 'calves']
+    },
+
+    // GYM MACHINES - CHEST
+    {
+      id: '73',
+      name: 'Chest Press Machine',
+      category: 'chest',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Machine-based chest press with controlled movement',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '74',
+      name: 'Pec Deck Machine',
+      category: 'chest',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 15,
+      sets: 3,
+      description: 'Isolation machine for chest flyes',
+      muscleGroups: ['chest']
+    },
+    {
+      id: '75',
+      name: 'Cable Crossover',
+      category: 'chest',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 12,
+      sets: 3,
+      description: 'Cable machine chest exercise with constant tension',
+      muscleGroups: ['chest', 'shoulders']
+    },
+    {
+      id: '76',
+      name: 'Smith Machine Bench Press',
+      category: 'chest',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 4,
+      description: 'Guided barbell bench press on Smith machine',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '77',
+      name: 'Incline Bench Press Machine',
+      category: 'chest',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 10,
+      sets: 4,
+      description: 'Machine targeting upper chest',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+
+    // GYM MACHINES - BACK
+    {
+      id: '78',
+      name: 'Assisted Pull-up Machine',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 10,
+      sets: 4,
+      description: 'Machine-assisted pull-ups for back development',
+      muscleGroups: ['back', 'biceps', 'shoulders']
+    },
+    {
+      id: '79',
+      name: 'Cable Lat Pulldown',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Wide grip lat pulldown on cable machine',
+      muscleGroups: ['lats', 'back', 'biceps']
+    },
+    {
+      id: '80',
+      name: 'Low Row Machine',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Seated machine for horizontal pulling',
+      muscleGroups: ['back', 'biceps', 'rear-delts']
+    },
+    {
+      id: '81',
+      name: 'Back Extension Machine',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 15,
+      sets: 3,
+      description: 'Lower back strengthening machine',
+      muscleGroups: ['lower-back', 'glutes', 'hamstrings']
+    },
+    {
+      id: '82',
+      name: 'Reverse Fly Machine',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 15,
+      sets: 3,
+      description: 'Machine for rear delts and upper back',
+      muscleGroups: ['rear-delts', 'back', 'shoulders']
+    },
+
+    // GYM MACHINES - SHOULDERS
+    {
+      id: '83',
+      name: 'Shoulder Press Machine',
+      category: 'shoulders',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Machine-based overhead shoulder press',
+      muscleGroups: ['shoulders', 'triceps']
+    },
+    {
+      id: '84',
+      name: 'Lateral Raise Machine',
+      category: 'shoulders',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 15,
+      sets: 3,
+      description: 'Machine isolation for side deltoids',
+      muscleGroups: ['shoulders']
+    },
+    {
+      id: '85',
+      name: 'Rear Delt Machine',
+      category: 'shoulders',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 15,
+      sets: 3,
+      description: 'Dedicated machine for rear deltoid development',
+      muscleGroups: ['rear-delts', 'shoulders']
+    },
+
+    // GYM MACHINES - ARMS
+    {
+      id: '86',
+      name: 'Cable Bicep Curls',
+      category: 'arms',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 12,
+      sets: 4,
+      description: 'Cable machine bicep curls with constant tension',
+      muscleGroups: ['biceps']
+    },
+    {
+      id: '87',
+      name: 'Cable Tricep Pushdown',
+      category: 'arms',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 12,
+      sets: 4,
+      description: 'Cable machine tricep isolation exercise',
+      muscleGroups: ['triceps']
+    },
+    {
+      id: '88',
+      name: 'Tricep Dip Machine',
+      category: 'arms',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 12,
+      sets: 4,
+      description: 'Assisted or weighted tricep dip machine',
+      muscleGroups: ['triceps', 'chest', 'shoulders']
+    },
+    {
+      id: '89',
+      name: 'EZ Bar Curl',
+      category: 'arms',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 12,
+      sets: 4,
+      description: 'Bicep curls using EZ curl bar',
+      muscleGroups: ['biceps', 'forearms']
+    },
+    {
+      id: '90',
+      name: 'Cable Overhead Tricep Extension',
+      category: 'arms',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 150,
+      reps: 12,
+      sets: 3,
+      description: 'Overhead cable extension for tricep stretch',
+      muscleGroups: ['triceps']
+    },
+
+    // GYM MACHINES - LEGS
+    {
+      id: '91',
+      name: 'Leg Extension Machine',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 15,
+      sets: 4,
+      description: 'Quad isolation machine',
+      muscleGroups: ['quads']
+    },
+    {
+      id: '92',
+      name: 'Leg Curl Machine',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 15,
+      sets: 4,
+      description: 'Hamstring isolation machine',
+      muscleGroups: ['hamstrings']
+    },
+    {
+      id: '93',
+      name: 'Hack Squat Machine',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 4,
+      description: 'Angled squat machine for leg development',
+      muscleGroups: ['quads', 'glutes', 'hamstrings']
+    },
+    {
+      id: '94',
+      name: 'Smith Machine Squats',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 4,
+      description: 'Guided barbell squats on Smith machine',
+      muscleGroups: ['quads', 'glutes', 'hamstrings']
+    },
+    {
+      id: '95',
+      name: 'Calf Raise Machine',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 20,
+      sets: 4,
+      description: 'Standing or seated calf raise machine',
+      muscleGroups: ['calves']
+    },
+    {
+      id: '96',
+      name: 'Leg Press Machine',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 240,
+      reps: 12,
+      sets: 4,
+      description: 'Heavy leg press machine for overall leg development',
+      muscleGroups: ['quads', 'glutes', 'hamstrings']
+    },
+    {
+      id: '97',
+      name: 'Hip Abductor Machine',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 15,
+      sets: 3,
+      description: 'Machine for outer thigh and hip abductors',
+      muscleGroups: ['glutes', 'outer-thighs']
+    },
+    {
+      id: '98',
+      name: 'Hip Adductor Machine',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 15,
+      sets: 3,
+      description: 'Machine for inner thigh adductors',
+      muscleGroups: ['inner-thighs']
+    },
+    {
+      id: '99',
+      name: 'Glute Ham Raise',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 8,
+      sets: 3,
+      description: 'Advanced hamstring and glute exercise',
+      muscleGroups: ['hamstrings', 'glutes', 'lower-back']
+    },
+
+    // GYM MACHINES - CORE
+    {
+      id: '100',
+      name: 'Cable Crunch',
+      category: 'core',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 150,
+      reps: 15,
+      sets: 4,
+      description: 'Weighted cable crunches for ab development',
+      muscleGroups: ['abs', 'core']
+    },
+    {
+      id: '101',
+      name: 'Cable Wood Chop',
+      category: 'core',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 150,
+      reps: 12,
+      sets: 3,
+      description: 'Rotational core exercise using cable',
+      muscleGroups: ['obliques', 'abs', 'core']
+    },
+    {
+      id: '102',
+      name: 'Decline Sit-ups',
+      category: 'core',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 150,
+      reps: 15,
+      sets: 4,
+      description: 'Sit-ups on decline bench for added resistance',
+      muscleGroups: ['abs', 'core']
+    },
+    {
+      id: '103',
+      name: 'Captain\'s Chair Leg Raises',
+      category: 'core',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 150,
+      reps: 12,
+      sets: 4,
+      description: 'Leg raises using captain\'s chair apparatus',
+      muscleGroups: ['abs', 'hip-flexors']
+    },
+
+    // GYM MACHINES - CARDIO
+    {
+      id: '104',
+      name: 'Stair Climber',
+      category: 'cardio',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 1200,
+      description: 'Stair climbing machine for cardio and leg endurance',
+      muscleGroups: ['legs', 'glutes', 'cardiovascular']
+    },
+    {
+      id: '105',
+      name: 'Assault Bike',
+      category: 'cardio',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 900,
+      description: 'High-intensity air bike for full-body cardio',
+      muscleGroups: ['full-body', 'cardiovascular']
+    },
+    {
+      id: '106',
+      name: 'Ski Erg Machine',
+      category: 'cardio',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 900,
+      description: 'Skiing motion machine for upper body cardio',
+      muscleGroups: ['arms', 'core', 'back', 'cardiovascular']
+    },
+    {
+      id: '107',
+      name: 'VersaClimber',
+      category: 'cardio',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 600,
+      description: 'Vertical climbing machine for intense cardio',
+      muscleGroups: ['full-body', 'cardiovascular']
+    },
+
+    // GYM FREE WEIGHTS - Additional
+    {
+      id: '108',
+      name: 'Barbell Front Squats',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 300,
+      reps: 8,
+      sets: 4,
+      description: 'Front-loaded squat variation emphasizing quads',
+      muscleGroups: ['quads', 'core', 'glutes']
+    },
+    {
+      id: '109',
+      name: 'Barbell Overhead Press',
+      category: 'shoulders',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 8,
+      sets: 4,
+      description: 'Standing barbell shoulder press',
+      muscleGroups: ['shoulders', 'triceps', 'core']
+    },
+    {
+      id: '110',
+      name: 'Incline Dumbbell Press',
+      category: 'chest',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 10,
+      sets: 4,
+      description: 'Incline bench press with dumbbells for upper chest',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '111',
+      name: 'Dumbbell Pullover',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 12,
+      sets: 3,
+      description: 'Dumbbell pullover for lats and chest stretch',
+      muscleGroups: ['lats', 'chest', 'shoulders']
+    },
+    {
+      id: '112',
+      name: 'Barbell Shrugs',
+      category: 'shoulders',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 15,
+      sets: 4,
+      description: 'Heavy barbell shrugs for trap development',
+      muscleGroups: ['traps', 'shoulders']
+    },
+    {
+      id: '113',
+      name: 'Dumbbell Lunges',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'intermediate',
+      duration: 240,
+      reps: 12,
+      sets: 4,
+      description: 'Weighted lunges with dumbbells',
+      muscleGroups: ['quads', 'glutes', 'hamstrings']
+    },
+    {
+      id: '114',
+      name: 'Barbell Curls',
+      category: 'arms',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 12,
+      sets: 4,
+      description: 'Classic barbell bicep curls',
+      muscleGroups: ['biceps']
+    },
+    {
+      id: '115',
+      name: 'Dumbbell Tricep Kickbacks',
+      category: 'arms',
+      equipment: 'gym',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 12,
+      sets: 3,
+      description: 'Isolation exercise for triceps',
+      muscleGroups: ['triceps']
     }
   ];
 
