@@ -3,11 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+let supabase: any = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+} else {
+  console.warn('Supabase environment variables not configured. Database features will be disabled.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export { supabase };
 
 export interface WorkoutCompletion {
   id?: string;
@@ -42,6 +46,11 @@ export async function saveWorkoutCompletion(
   totalTimeMinutes?: number,
   notes?: string
 ): Promise<string | null> {
+  if (!supabase) {
+    console.warn('Supabase not configured');
+    return null;
+  }
+
   try {
     const { data, error } = await supabase
       .from('workout_completions')
@@ -73,6 +82,11 @@ export async function saveExerciseLogs(
   workoutCompletionId: string,
   exercises: ExerciseLog[]
 ): Promise<boolean> {
+  if (!supabase) {
+    console.warn('Supabase not configured');
+    return false;
+  }
+
   try {
     const logsToInsert = exercises.map(ex => ({
       workout_completion_id: workoutCompletionId,
@@ -102,6 +116,14 @@ export async function saveExerciseLogs(
 }
 
 export async function getWorkoutStats(userId: string) {
+  if (!supabase) {
+    return {
+      totalWorkouts: 0,
+      thisWeek: 0,
+      completions: []
+    };
+  }
+
   try {
     const { data, error } = await supabase
       .from('workout_completions')
@@ -141,6 +163,10 @@ export async function getWorkoutStats(userId: string) {
 }
 
 export async function getExerciseLogs(workoutCompletionId: string) {
+  if (!supabase) {
+    return [];
+  }
+
   try {
     const { data, error } = await supabase
       .from('exercise_logs')
