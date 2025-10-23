@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Target, Play, Award, Bell } from 'lucide-react';
 import { User } from '../types';
+import { getWorkoutStats } from '../lib/supabase';
 
 interface DashboardProps {
   user: User;
@@ -9,6 +10,24 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProgress }) => {
+  const [stats, setStats] = useState({
+    totalWorkouts: 0,
+    thisWeek: 0,
+    completions: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, [user.id]);
+
+  const loadStats = async () => {
+    setIsLoading(true);
+    const data = await getWorkoutStats(user.id);
+    setStats(data);
+    setIsLoading(false);
+  };
+
   const motivationalMessages = [
     "Ready to crush your fitness goals today?",
     "Every workout brings you closer to your best self!",
@@ -65,14 +84,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
                 <h3 className="font-semibold text-[#2C2C2C]">Weekly Progress</h3>
                 <Calendar className="w-5 h-5 text-[#0074D9]" />
               </div>
-              <div className="text-2xl font-bold text-[#2C2C2C] mb-2">3/{user.workoutFrequency}</div>
-              <div className="text-sm text-gray-600">Workouts completed this week</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
-                <div 
-                  className="bg-[#0074D9] h-2 rounded-full" 
-                  style={{ width: `${(3 / user.workoutFrequency) * 100}%` }}
-                ></div>
-              </div>
+              {isLoading ? (
+                <div className="text-gray-400">Loading...</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-[#2C2C2C] mb-2">{stats.thisWeek}/{user.workoutFrequency}</div>
+                  <div className="text-sm text-gray-600">Workouts completed this week</div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                    <div
+                      className="bg-[#0074D9] h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min((stats.thisWeek / user.workoutFrequency) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -80,8 +105,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
                 <h3 className="font-semibold text-[#2C2C2C]">Total Workouts</h3>
                 <Target className="w-5 h-5 text-[#9B59B6]" />
               </div>
-              <div className="text-2xl font-bold text-[#2C2C2C] mb-2">12</div>
-              <div className="text-sm text-green-600">+2 from last week</div>
+              {isLoading ? (
+                <div className="text-gray-400">Loading...</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-[#2C2C2C] mb-2">{stats.totalWorkouts}</div>
+                  <div className="text-sm text-gray-600">All time</div>
+                </>
+              )}
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm">

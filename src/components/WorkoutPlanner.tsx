@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, Play, Clock, Target, Dumbbell } from 'lucide-react';
+import { ArrowLeft, Filter, Clock, Target, Dumbbell, CheckCircle } from 'lucide-react';
 import { User, WorkoutPlan, Exercise } from '../types';
+import WorkoutCompletionModal from './WorkoutCompletionModal';
 
 interface WorkoutPlannerProps {
   user: User;
@@ -20,6 +21,8 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   const [generatedPlan, setGeneratedPlan] = useState<WorkoutPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [weeklyFrequency, setWeeklyFrequency] = useState(user.workoutFrequency);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionMessage, setCompletionMessage] = useState('');
 
   // Helper function to format time properly
   const formatTime = (seconds: number): string => {
@@ -2147,9 +2150,12 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                         >
                           Save Workout
                         </button>
-                        <button className="bg-[#0074D9] text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center">
-                          <Play className="w-4 h-4 mr-2" />
-                          Start Now
+                        <button
+                          onClick={() => setShowCompletionModal(true)}
+                          className="bg-[#16A34A] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#15803D] transition-colors flex items-center"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Mark as Complete
                         </button>
                       </div>
                     </div>
@@ -2239,6 +2245,25 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
           </div>
         </div>
       </div>
+
+      {showCompletionModal && generatedPlan && (
+        <WorkoutCompletionModal
+          workout={generatedPlan}
+          userId={user.id}
+          onClose={() => setShowCompletionModal(false)}
+          onComplete={() => {
+            setCompletionMessage('Workout completed! Great job! 🎉');
+            setTimeout(() => setCompletionMessage(''), 3000);
+          }}
+        />
+      )}
+
+      {completionMessage && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50">
+          <CheckCircle className="w-5 h-5" />
+          <span>{completionMessage}</span>
+        </div>
+      )}
     </div>
   );
 };
