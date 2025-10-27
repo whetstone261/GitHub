@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, Clock, Target, Dumbbell, CheckCircle, Play, Calendar } from 'lucide-react';
+import { ArrowLeft, Filter, Clock, Target, Dumbbell, CheckCircle } from 'lucide-react';
 import { User, WorkoutPlan, Exercise } from '../types';
 import WorkoutCompletionModal from './WorkoutCompletionModal';
 
@@ -23,10 +23,6 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   const [weeklyFrequency, setWeeklyFrequency] = useState(user.workoutFrequency);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionMessage, setCompletionMessage] = useState('');
-  const [selectedWeeklyWorkout, setSelectedWeeklyWorkout] = useState<WorkoutPlan | null>(null);
-  const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Helper function to format time properly
   const formatTime = (seconds: number): string => {
@@ -39,33 +35,6 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  };
-
-  // Calendar helper functions
-  const getWeekDates = (date: Date) => {
-    const start = new Date(date);
-    start.setDate(start.getDate() - start.getDay() + 1); // Start from Monday
-    const dates = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      dates.push(d);
-    }
-    return dates;
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const isSameDay = (date1: Date, date2: Date) => {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
-  };
-
-  const getDayName = (date: Date) => {
-    return date.toLocaleDateString('en-US', { weekday: 'long' });
   };
 
   // Helper function to get rest time based on difficulty
@@ -2099,116 +2068,49 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                       </div>
                     </div>
 
-                    <div className="mb-6">
-                      <button
-                        onClick={() => setShowCalendar(!showCalendar)}
-                        className="flex items-center text-[#0074D9] hover:text-blue-700 font-medium mb-4"
-                      >
-                        <Calendar className="w-4 h-4 mr-2" />
-                        {showCalendar ? 'Hide' : 'Show'} Calendar View
-                      </button>
-
-                      {showCalendar && (
-                        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <button
-                              onClick={() => {
-                                const newDate = new Date(selectedDate);
-                                newDate.setDate(newDate.getDate() - 7);
-                                setSelectedDate(newDate);
-                              }}
-                              className="text-[#0074D9] hover:text-blue-700"
-                            >
-                              ← Previous Week
-                            </button>
-                            <h4 className="font-semibold text-[#2C2C2C]">
-                              {formatDate(getWeekDates(selectedDate)[0])} - {formatDate(getWeekDates(selectedDate)[6])}
-                            </h4>
-                            <button
-                              onClick={() => {
-                                const newDate = new Date(selectedDate);
-                                newDate.setDate(newDate.getDate() + 7);
-                                setSelectedDate(newDate);
-                              }}
-                              className="text-[#0074D9] hover:text-blue-700"
-                            >
-                              Next Week →
-                            </button>
-                          </div>
-                          <div className="grid grid-cols-7 gap-2">
-                            {getWeekDates(selectedDate).map((date, index) => {
-                              const dayName = getDayName(date);
-                              const dayWorkout = generatedPlan.weeklyWorkouts?.find(w => w.dayOfWeek === dayName);
-                              const isToday = isSameDay(date, new Date());
-                              const isCompleted = dayWorkout && completedWorkouts.has(dayWorkout.id);
-
-                              return (
-                                <div
-                                  key={index}
-                                  className={`p-3 rounded-lg border text-center ${
-                                    isToday ? 'border-[#0074D9] bg-blue-50' :
-                                    isCompleted ? 'bg-green-50 border-green-200' :
-                                    dayWorkout ? 'border-gray-300' : 'bg-gray-50 border-gray-200'
-                                  }`}
-                                >
-                                  <div className="text-xs text-gray-600 mb-1">{date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                                  <div className={`text-sm font-semibold mb-1 ${isToday ? 'text-[#0074D9]' : 'text-[#2C2C2C]'}`}>
-                                    {date.getDate()}
-                                  </div>
-                                  {dayWorkout && (
-                                    <div className="text-xs text-gray-600 truncate">
-                                      {dayWorkout.focusArea?.replace('-', ' ')}
-                                    </div>
-                                  )}
-                                  {isCompleted && (
-                                    <CheckCircle className="w-4 h-4 text-green-600 mx-auto mt-1" />
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
                     <div className="grid gap-4">
-                      {generatedPlan.weeklyWorkouts?.map((dayWorkout, dayIndex) => {
-                        const isCompleted = completedWorkouts.has(dayWorkout.id);
-                        return (
-                          <div key={dayWorkout.id} className={`border rounded-lg p-4 ${
-                            isCompleted ? 'border-green-300 bg-green-50' : 'border-gray-200'
-                          }`}>
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center space-x-2">
-                                <h3 className="text-lg font-semibold text-[#2C2C2C]">{dayWorkout.name}</h3>
-                                {isCompleted && (
-                                  <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
-                                    ✓ Complete
-                                  </span>
-                                )}
+                      {generatedPlan.weeklyWorkouts?.map((dayWorkout, dayIndex) => (
+                        <div key={dayWorkout.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-[#2C2C2C]">{dayWorkout.name}</h3>
+                            <div className="flex items-center space-x-4 text-sm">
+                              <div className="flex items-center text-gray-600">
+                                <Clock className="w-4 h-4 mr-1" />
+                                {dayWorkout.duration}min
                               </div>
-                              <div className="flex items-center space-x-4 text-sm">
-                                <div className="flex items-center text-gray-600">
-                                  <Clock className="w-4 h-4 mr-1" />
-                                  {dayWorkout.duration}min
-                                </div>
-                                {!isCompleted && (
-                                  <button
-                                    onClick={() => {
-                                      setSelectedWeeklyWorkout(dayWorkout);
-                                      setShowCompletionModal(true);
-                                    }}
-                                    className="bg-[#0074D9] text-white px-3 py-1 rounded font-medium hover:bg-blue-700 transition-colors flex items-center text-sm"
-                                  >
-                                    <Play className="w-3 h-3 mr-1" />
-                                    Start
-                                  </button>
-                                )}
-                              </div>
+                              <button className="bg-[#0074D9] text-white px-3 py-1 rounded font-medium hover:bg-blue-700 transition-colors flex items-center text-sm">
+                                <Play className="w-3 h-3 mr-1" />
+                                Start
+                              </button>
                             </div>
                           </div>
-                        );
-                      })}
+                          
+                          <div className="space-y-2">
+                            {dayWorkout.exercises.map((exercise, index) => (
+                              <div key={exercise.id} className="flex items-center justify-between text-sm">
+                                <span className="text-gray-700">{index + 1}. {exercise.name}</span>
+                                <div className="flex items-center space-x-2">
+                                  {exercise.sets && exercise.reps && (
+                                    <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded text-xs">
+                                      {exercise.sets}×{exercise.reps}
+                                    </span>
+                                  )}
+                                  {exercise.duration && !exercise.reps && (
+                                    <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded text-xs">
+                                      {formatTime(exercise.duration)}
+                                    </span>
+                                  )}
+                                  {exercise.restTime && (
+                                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                                      Rest: {formatTime(exercise.restTime)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
 
                     <div className="mt-6 bg-blue-50 p-4 rounded-lg">
@@ -2344,23 +2246,14 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         </div>
       </div>
 
-      {showCompletionModal && (selectedWeeklyWorkout || generatedPlan) && (
+      {showCompletionModal && generatedPlan && (
         <WorkoutCompletionModal
-          workout={selectedWeeklyWorkout || generatedPlan!}
+          workout={generatedPlan}
           userId={user.id}
-          onClose={() => {
-            setShowCompletionModal(false);
-            setSelectedWeeklyWorkout(null);
-          }}
+          onClose={() => setShowCompletionModal(false)}
           onComplete={() => {
-            if (selectedWeeklyWorkout) {
-              setCompletedWorkouts(prev => new Set([...prev, selectedWeeklyWorkout.id]));
-              setCompletionMessage(`${selectedWeeklyWorkout.dayOfWeek} workout completed! Great job! 🎉`);
-            } else {
-              setCompletionMessage('Workout completed! Great job! 🎉');
-            }
+            setCompletionMessage('Workout completed! Great job! 🎉');
             setTimeout(() => setCompletionMessage(''), 3000);
-            setSelectedWeeklyWorkout(null);
           }}
         />
       )}
