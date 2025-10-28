@@ -107,25 +107,52 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     return restDayMap[frequency] || ['Sunday'];
   };
 
-  // Helper function to get weekly workout schedule
+  // Helper function to get weekly workout schedule with proper spacing
   const getWeeklySchedule = (frequency: number, focusAreas: string[]): { day: string; focus: string }[] => {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const schedule: { day: string; focus: string }[] = [];
 
-    // If full-body is selected along with other areas, use all of them
-    // If only full-body is selected, repeat it for all days
-    if (focusAreas.length > 0) {
-      return days.slice(0, frequency).map((day, index) => ({
-        day,
-        focus: focusAreas[index % focusAreas.length]
-      }));
+    // Determine focus rotation
+    const focuses = focusAreas.length > 0 ? focusAreas : ['upper-body', 'lower-body', 'cardio', 'core'];
+
+    // Space workouts evenly throughout the week
+    if (frequency === 3) {
+      // Monday, Wednesday, Friday
+      schedule.push(
+        { day: 'Monday', focus: focuses[0 % focuses.length] },
+        { day: 'Wednesday', focus: focuses[1 % focuses.length] },
+        { day: 'Friday', focus: focuses[2 % focuses.length] }
+      );
+    } else if (frequency === 4) {
+      // Monday, Tuesday, Thursday, Saturday
+      schedule.push(
+        { day: 'Monday', focus: focuses[0 % focuses.length] },
+        { day: 'Tuesday', focus: focuses[1 % focuses.length] },
+        { day: 'Thursday', focus: focuses[2 % focuses.length] },
+        { day: 'Saturday', focus: focuses[3 % focuses.length] }
+      );
+    } else if (frequency === 5) {
+      // Monday, Tuesday, Thursday, Friday, Saturday
+      schedule.push(
+        { day: 'Monday', focus: focuses[0 % focuses.length] },
+        { day: 'Tuesday', focus: focuses[1 % focuses.length] },
+        { day: 'Thursday', focus: focuses[2 % focuses.length] },
+        { day: 'Friday', focus: focuses[3 % focuses.length] },
+        { day: 'Saturday', focus: focuses[4 % focuses.length] }
+      );
+    } else if (frequency === 6) {
+      // Monday through Saturday
+      schedule.push(
+        { day: 'Monday', focus: focuses[0 % focuses.length] },
+        { day: 'Tuesday', focus: focuses[1 % focuses.length] },
+        { day: 'Wednesday', focus: focuses[2 % focuses.length] },
+        { day: 'Thursday', focus: focuses[3 % focuses.length] },
+        { day: 'Friday', focus: focuses[4 % focuses.length] },
+        { day: 'Saturday', focus: focuses[5 % focuses.length] }
+      );
     }
 
-    // Default balanced schedule if no focus areas selected
-    const defaultFocusAreas = ['upper-body', 'lower-body', 'cardio', 'core', 'upper-body', 'lower-body'];
-    return days.slice(0, frequency).map((day, index) => ({
-      day,
-      focus: defaultFocusAreas[index]
-    }));
+    return schedule;
   };
 
   const sampleExercises: Exercise[] = [
@@ -2205,6 +2232,29 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                                   </button>
                                 )}
                               </div>
+                            </div>
+
+                            <div className="space-y-2 mt-4">
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">Exercises:</h4>
+                              {dayWorkout.exercises
+                                .filter(ex => !ex.isWarmup && !ex.isCooldown)
+                                .map((exercise, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-sm bg-white p-2 rounded border border-gray-100">
+                                  <span className="text-gray-700">{exercise.name}</span>
+                                  <div className="flex items-center space-x-2 text-xs">
+                                    {exercise.sets && exercise.reps && (
+                                      <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded">
+                                        {exercise.sets} × {exercise.reps}
+                                      </span>
+                                    )}
+                                    {exercise.duration && !exercise.reps && (
+                                      <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded">
+                                        {formatTime(exercise.duration)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         );
