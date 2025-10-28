@@ -1694,18 +1694,18 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     const warmupTime = 5 * 60; // 5 minutes
     const cooldownTime = 5 * 60; // 5 minutes
     const exerciseTime = targetDuration - warmupTime - cooldownTime;
-    
+
     // Get underused muscle groups for better variety
     const underusedMuscles = getUnderusedMuscleGroups();
-    
+
     // Filter exercises based on user equipment and difficulty
     const filteredExercises = sampleExercises.filter(exercise => {
-      const equipmentMatch = 
+      const equipmentMatch =
         (selectedFilters.equipment === 'none' && exercise.equipment === 'none') ||
         (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
         (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
-      
-      const difficultyMatch = 
+
+      const difficultyMatch =
         exercise.difficulty === selectedFilters.difficulty ||
         (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
         (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
@@ -1735,14 +1735,15 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       return 0.5 - Math.random();
     });
 
-    // Select exercises to fill the target time
+    // Select exercises to fill the target time more accurately
     const selectedExercises: Exercise[] = [];
     let currentTime = 0;
     let exerciseIndex = 0;
 
-    while (currentTime < exerciseTime && exerciseIndex < prioritizedExercises.length) {
+    // First pass: add exercises that fit within time
+    while (exerciseIndex < prioritizedExercises.length) {
       const exercise = prioritizedExercises[exerciseIndex];
-      const exerciseDuration = exercise.duration || 120; // Default 2 minutes if not specified
+      const exerciseDuration = exercise.duration || 120;
       const restTime = getRestTime(selectedFilters.difficulty, exercise.category);
       const totalExerciseTime = exerciseDuration + restTime;
 
@@ -1754,6 +1755,30 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         currentTime += totalExerciseTime;
       }
       exerciseIndex++;
+    }
+
+    // Second pass: if we're more than 5 minutes short, try to add more exercises
+    const timeRemaining = exerciseTime - currentTime;
+    if (timeRemaining > 300 && prioritizedExercises.length > selectedExercises.length) {
+      const unusedExercises = prioritizedExercises.filter(
+        ex => !selectedExercises.some(sel => sel.id === ex.id)
+      );
+
+      for (const exercise of unusedExercises) {
+        const exerciseDuration = exercise.duration || 120;
+        const restTime = getRestTime(selectedFilters.difficulty, exercise.category);
+        const totalExerciseTime = exerciseDuration + restTime;
+
+        if (currentTime + totalExerciseTime <= exerciseTime) {
+          selectedExercises.push({
+            ...exercise,
+            restTime: restTime
+          });
+          currentTime += totalExerciseTime;
+
+          if (exerciseTime - currentTime < 300) break;
+        }
+      }
     }
 
     // Add warm-up and cool-down exercises - select random stretches
@@ -1785,27 +1810,27 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   const generateWeeklyPlan = () => {
     const schedule = getWeeklySchedule(weeklyFrequency, selectedFilters.focusAreas);
     const weeklyWorkouts: WorkoutPlan[] = [];
-    
+
     schedule.forEach((dayPlan, index) => {
       const targetDuration = parseInt(selectedFilters.duration) * 60;
       const warmupTime = 5 * 60;
       const cooldownTime = 5 * 60;
       const exerciseTime = targetDuration - warmupTime - cooldownTime;
-      
+
       // Filter exercises for this day's focus
       const filteredExercises = sampleExercises.filter(exercise => {
-        const equipmentMatch = 
+        const equipmentMatch =
           (selectedFilters.equipment === 'none' && exercise.equipment === 'none') ||
           (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
           (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
-        
-        const difficultyMatch = 
+
+        const difficultyMatch =
           exercise.difficulty === selectedFilters.difficulty ||
           (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
           (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
 
         // Enhanced focus matching for specific body parts
-        const focusMatch = 
+        const focusMatch =
           exercise.category === dayPlan.focus ||
           (dayPlan.focus === 'upper-body' && ['chest', 'back', 'shoulders', 'arms'].includes(exercise.category)) ||
           (dayPlan.focus === 'lower-body' && ['legs'].includes(exercise.category)) ||
@@ -1816,13 +1841,14 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         return equipmentMatch && difficultyMatch && focusMatch;
       });
 
-      // Select exercises for this day
+      // Select exercises for this day to match target duration
       const shuffled = [...filteredExercises].sort(() => 0.5 - Math.random());
       const selectedExercises: Exercise[] = [];
       let currentTime = 0;
       let exerciseIndex = 0;
 
-      while (currentTime < exerciseTime && exerciseIndex < shuffled.length) {
+      // First pass: add exercises
+      while (exerciseIndex < shuffled.length) {
         const exercise = shuffled[exerciseIndex];
         const exerciseDuration = exercise.duration || 120;
         const restTime = getRestTime(selectedFilters.difficulty, exercise.category);
@@ -1836,6 +1862,30 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
           currentTime += totalExerciseTime;
         }
         exerciseIndex++;
+      }
+
+      // Second pass: fill remaining time if more than 5 minutes short
+      const timeRemaining = exerciseTime - currentTime;
+      if (timeRemaining > 300 && shuffled.length > selectedExercises.length) {
+        const unusedExercises = shuffled.filter(
+          ex => !selectedExercises.some(sel => sel.id === ex.id)
+        );
+
+        for (const exercise of unusedExercises) {
+          const exerciseDuration = exercise.duration || 120;
+          const restTime = getRestTime(selectedFilters.difficulty, exercise.category);
+          const totalExerciseTime = exerciseDuration + restTime;
+
+          if (currentTime + totalExerciseTime <= exerciseTime) {
+            selectedExercises.push({
+              ...exercise,
+              restTime: restTime
+            });
+            currentTime += totalExerciseTime;
+
+            if (exerciseTime - currentTime < 300) break;
+          }
+        }
       }
 
       const allStretches = sampleExercises.filter(ex => ex.category === 'flexibility');
