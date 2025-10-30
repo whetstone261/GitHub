@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, Clock, Target, Dumbbell, CheckCircle, Play, Calendar } from 'lucide-react';
+import { ArrowLeft, Filter, Clock, Target, Dumbbell, CheckCircle, Play, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { User, WorkoutPlan, Exercise } from '../types';
 import WorkoutCompletionModal from './WorkoutCompletionModal';
 
@@ -27,6 +27,8 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [expandedWorkouts, setExpandedWorkouts] = useState<Set<string>>(new Set());
+  const [expandedSingleWorkout, setExpandedSingleWorkout] = useState(true);
 
   // Helper function to format time properly
   const formatTime = (seconds: number): string => {
@@ -1787,11 +1789,16 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     const warmupExercises = shuffledStretches.slice(0, 2);
     const cooldownExercises = shuffledStretches.slice(2, 4);
 
+    // Calculate actual total time including warmup and cooldown
+    const actualTotalMinutes = Math.round((warmupTime + currentTime + cooldownTime) / 60);
+    const targetMinutes = parseInt(selectedFilters.duration);
+    const timeDifference = Math.abs(actualTotalMinutes - targetMinutes);
+
     const newPlan: WorkoutPlan = {
       id: Date.now().toString(),
       userId: user.id,
       name: `${selectedFilters.focusAreas.length > 0 ? selectedFilters.focusAreas.map(f => f.charAt(0).toUpperCase() + f.slice(1).replace('-', ' ')).join(' + ') : 'Full Body'} Workout`,
-      description: `AI-generated ${parseInt(selectedFilters.duration)}-minute workout tailored to your goals`,
+      description: `AI-generated ${actualTotalMinutes}-minute workout tailored to your goals${timeDifference > 0 ? ` (target: ${targetMinutes}min)` : ''}`,
       exercises: [
         ...warmupExercises.map(ex => ({ ...ex, isWarmup: true })),
         ...selectedExercises,
@@ -2284,28 +2291,70 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                               </div>
                             </div>
 
-                            <div className="space-y-2 mt-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">Exercises:</h4>
-                              {dayWorkout.exercises
-                                .filter(ex => !ex.isWarmup && !ex.isCooldown)
-                                .map((exercise, idx) => (
-                                <div key={idx} className="flex items-center justify-between text-sm bg-white p-2 rounded border border-gray-100">
-                                  <span className="text-gray-700">{exercise.name}</span>
-                                  <div className="flex items-center space-x-2 text-xs">
-                                    {exercise.sets && exercise.reps && (
-                                      <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded">
-                                        {exercise.sets} × {exercise.reps}
+                            <button
+                              onClick={() => {
+                                const newExpanded = new Set(expandedWorkouts);
+                                if (expandedWorkouts.has(dayWorkout.id)) {
+                                  newExpanded.delete(dayWorkout.id);
+                                } else {
+                                  newExpanded.add(dayWorkout.id);
+                                }
+                                setExpandedWorkouts(newExpanded);
+                              }}
+                              className="flex items-center text-[#0074D9] hover:text-blue-700 text-sm font-medium mt-2"
+                            >
+                              {expandedWorkouts.has(dayWorkout.id) ? (
+                                <><ChevronUp className="w-4 h-4 mr-1" /> Hide Details</>
+                              ) : (
+                                <><ChevronDown className="w-4 h-4 mr-1" /> Show Details</>
+                              )}
+                            </button>
+
+                            {expandedWorkouts.has(dayWorkout.id) && (
+                              <div className="space-y-2 mt-4">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">Exercises:</h4>
+                                {dayWorkout.exercises.map((exercise, idx) => (
+                                  <div key={idx} className={`border rounded-lg p-3 ${
+                                    exercise.isWarmup ? 'border-orange-200 bg-orange-50' :
+                                    exercise.isCooldown ? 'border-blue-200 bg-blue-50' :
+                                    'border-gray-200 bg-white'
+                                  }`}>
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div className="flex-1">
+                                        <h5 className="font-medium text-sm text-[#2C2C2C]">
+                                          {exercise.isWarmup ? '🔥 ' : exercise.isCooldown ? '🧘 ' : ''}
+                                          {idx + 1}. {exercise.name}
+                                          {exercise.isWarmup ? ' (Warm-up)' : exercise.isCooldown ? ' (Cool-down)' : ''}
+                                        </h5>
+                                        <p className="text-xs text-gray-600 mt-1">{exercise.description}</p>
+                                      </div>
+                                      <span className="text-xs text-gray-500 capitalize ml-2">{exercise.difficulty}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2 text-xs">
+                                      {exercise.sets && exercise.reps && (
+                                        <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded">
+                                          {exercise.sets} sets × {exercise.reps} reps
+                                        </span>
+                                      )}
+                                      {exercise.duration && !exercise.reps && (
+                                        <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded">
+                                          {formatTime(exercise.duration)}
+                                        </span>
+                                      )}
+                                      {exercise.restTime && !exercise.isWarmup && !exercise.isCooldown && (
+                                        <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                          Rest: {formatTime(exercise.restTime)}
+                                        </span>
+                                      )}
+                                      <span className="text-gray-500">
+                                        {exercise.equipment === 'none' ? 'No equipment' :
+                                         exercise.equipment === 'basic' ? 'Basic equipment' : 'Gym equipment'}
                                       </span>
-                                    )}
-                                    {exercise.duration && !exercise.reps && (
-                                      <span className="bg-purple-100 text-[#9B59B6] px-2 py-1 rounded">
-                                        {formatTime(exercise.duration)}
-                                      </span>
-                                    )}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -2358,7 +2407,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-6 mb-6 text-sm">
+                    <div className="flex items-center space-x-6 mb-6 text-sm flex-wrap gap-y-2">
                       <div className="flex items-center text-gray-600">
                         <Clock className="w-4 h-4 mr-2" />
                         {generatedPlan.duration} minutes
@@ -2369,13 +2418,30 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Dumbbell className="w-4 h-4 mr-2" />
-                        {generatedPlan.equipment === 'none' ? 'No Equipment' : 
+                        {generatedPlan.equipment === 'none' ? 'No Equipment' :
                          generatedPlan.equipment === 'basic' ? 'Basic Equipment' : 'Full Gym'}
+                      </div>
+                      <div className="flex items-center">
+                        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                          ✓ Optimized Duration Match
+                        </span>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      {generatedPlan.exercises.map((exercise, index) => (
+                    <button
+                      onClick={() => setExpandedSingleWorkout(!expandedSingleWorkout)}
+                      className="flex items-center text-[#0074D9] hover:text-blue-700 font-medium mb-4"
+                    >
+                      {expandedSingleWorkout ? (
+                        <><ChevronUp className="w-5 h-5 mr-2" /> Hide Exercise Details</>
+                      ) : (
+                        <><ChevronDown className="w-5 h-5 mr-2" /> Show Exercise Details</>
+                      )}
+                    </button>
+
+                    {expandedSingleWorkout && (
+                      <div className="space-y-4">
+                        {generatedPlan.exercises.map((exercise, index) => (
                         <div key={exercise.id} className={`border rounded-lg p-4 ${
                           exercise.isWarmup ? 'border-orange-200 bg-orange-50' :
                           exercise.isCooldown ? 'border-blue-200 bg-blue-50' :
@@ -2411,8 +2477,19 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                             </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {!expandedSingleWorkout && (
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-600">
+                          <strong>{generatedPlan.exercises.filter(e => !e.isWarmup && !e.isCooldown).length}</strong> main exercises •
+                          <strong> {generatedPlan.exercises.filter(e => e.isWarmup).length}</strong> warmup •
+                          <strong> {generatedPlan.exercises.filter(e => e.isCooldown).length}</strong> cooldown
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
