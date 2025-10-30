@@ -8,6 +8,7 @@ interface WorkoutCompletionModalProps {
   userId: string;
   onClose: () => void;
   onComplete: () => void;
+  savedPlanId?: string;
 }
 
 interface ExerciseData {
@@ -25,7 +26,8 @@ export default function WorkoutCompletionModal({
   workout,
   userId,
   onClose,
-  onComplete
+  onComplete,
+  savedPlanId
 }: WorkoutCompletionModalProps) {
   const [totalTime, setTotalTime] = useState<number>(workout.duration);
   const [notes, setNotes] = useState<string>('');
@@ -63,6 +65,7 @@ export default function WorkoutCompletionModal({
     setIsSaving(true);
 
     try {
+      // Save to workout_completions table (existing)
       const workoutCompletionId = await saveWorkoutCompletion(
         userId,
         workout.name,
@@ -89,16 +92,24 @@ export default function WorkoutCompletionModal({
         notes: ex.notes
       }));
 
-      const success = await saveExerciseLogs(workoutCompletionId, exerciseLogs);
+      await saveExerciseLogs(workoutCompletionId, exerciseLogs);
 
-      if (success) {
-        onComplete();
-        onClose();
-      } else {
-        alert('Workout saved but failed to save exercise logs');
-        onComplete();
-        onClose();
-      }
+      // Also save to workout_plan_completions for calendar view
+      const { supabase } = await import('../lib/supabase');
+      await supabase
+        .from('workout_plan_completions')
+        .insert({
+          user_id: userId,
+          saved_plan_id: savedPlanId || null,
+          workout_date: new Date().toISOString().split('T')[0],
+          workout_name: workout.name,
+          day_of_week: workout.dayOfWeek || null,
+          completed_at: new Date().toISOString(),
+          notes: notes
+        });
+
+      onComplete();
+      onClose();
     } catch (error) {
       console.error('Error completing workout:', error);
       alert('An error occurred while saving your workout. Please check the console for details.');

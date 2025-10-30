@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Filter, Clock, Target, Dumbbell, CheckCircle, Play, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { User, WorkoutPlan, Exercise } from '../types';
 import WorkoutCompletionModal from './WorkoutCompletionModal';
+import { supabase } from '../lib/supabase';
 
 interface WorkoutPlannerProps {
   user: User;
@@ -29,6 +30,102 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [expandedWorkouts, setExpandedWorkouts] = useState<Set<string>>(new Set());
   const [expandedSingleWorkout, setExpandedSingleWorkout] = useState(true);
+  const [savedPlan, setSavedPlan] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [calendarCompletions, setCalendarCompletions] = useState<Map<string, any>>(new Map());
+
+  // Load saved plan and completions on mount
+  useEffect(() => {
+    loadSavedPlan();
+    loadCompletions();
+  }, [user.id]);
+
+  const loadSavedPlan = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('saved_workout_plans')
+        .select('*, saved_weekly_workouts(*)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setSavedPlan(data);
+        // Reconstruct the workout plan from saved data
+        if (data.is_weekly_plan && data.plan_data) {
+          const reconstructedPlan: WorkoutPlan = {
+            id: data.id,
+            userId: data.user_id,
+            name: data.plan_name,
+            description: data.plan_description,
+            exercises: [],
+            duration: data.duration_minutes,
+            difficulty: data.difficulty as 'beginner' | 'intermediate' | 'advanced',
+            category: data.category,
+            equipment: data.equipment,
+            isWeeklyPlan: true,
+            weeklyWorkouts: data.saved_weekly_workouts?.map((ww: any) => ({
+              id: ww.id,
+              userId: data.user_id,
+              name: ww.workout_name,
+              description: '',
+              exercises: ww.workout_data.exercises || [],
+              duration: data.duration_minutes,
+              difficulty: data.difficulty,
+              category: ww.focus_area,
+              equipment: data.equipment,
+              dayOfWeek: ww.day_of_week,
+              focusArea: ww.focus_area,
+              createdAt: new Date(ww.created_at)
+            })) || [],
+            createdAt: new Date(data.created_at)
+          };
+          setGeneratedPlan(reconstructedPlan);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved plan:', error);
+    }
+  };
+
+  const loadCompletions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('workout_plan_completions')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      if (data) {
+        const completionsMap = new Map();
+        const completedSet = new Set<string>();
+        data.forEach((completion: any) => {
+          const dateKey = completion.workout_date;
+          completionsMap.set(dateKey, completion);
+          // Also track by workout ID if it's part of a saved plan
+          if (completion.day_of_week) {
+            completedSet.add(`${completion.saved_plan_id}-${completion.day_of_week}`);
+          }
+        });
+        setCalendarCompletions(completionsMap);
+        // Update completed workouts for weekly plan
+        if (savedPlan && savedPlan.saved_weekly_workouts) {
+          const newCompletedWorkouts = new Set<string>();
+          savedPlan.saved_weekly_workouts.forEach((ww: any) => {
+            if (completedSet.has(`${savedPlan.id}-${ww.day_of_week}`)) {
+              newCompletedWorkouts.add(ww.id);
+            }
+          });
+          setCompletedWorkouts(newCompletedWorkouts);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading completions:', error);
+    }
+  };
 
   // Helper function to format time properly
   const formatTime = (seconds: number): string => {
@@ -1944,10 +2041,102 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     setGeneratedPlan(weeklyPlan);
   };
 
-  const saveWorkout = () => {
-    if (generatedPlan) {
+  const saveWorkout = async () => {
+    if (!generatedPlan) return;
+
+    setIsSaving(true);
+    try {
+      if (generatedPlan.isWeeklyPlan) {
+        // Save weekly plan
+        const { data: planData, error: planError } = await supabase
+          .from('saved_workout_plans')
+          .insert({
+            user_id: user.id,
+            plan_name: generatedPlan.name,
+            plan_description: generatedPlan.description,
+            duration_minutes: generatedPlan.duration,
+            difficulty: generatedPlan.difficulty,
+            equipment: generatedPlan.equipment,
+            category: generatedPlan.category,
+            is_weekly_plan: true,
+            start_date: new Date().toISOString().split('T')[0],
+            plan_data: { exercises: generatedPlan.exercises }
+          })
+          .select()
+          .single();
+
+        if (planError) throw planError;
+
+        // Save each day's workout
+        if (planData && generatedPlan.weeklyWorkouts) {
+          const weeklyWorkoutsData = generatedPlan.weeklyWorkouts.map(workout => ({
+            saved_plan_id: planData.id,
+            day_of_week: workout.dayOfWeek!,
+            workout_name: workout.name,
+            focus_area: workout.focusArea,
+            workout_data: { exercises: workout.exercises }
+          }));
+
+          const { error: workoutsError } = await supabase
+            .from('saved_weekly_workouts')
+            .insert(weeklyWorkoutsData);
+
+          if (workoutsError) throw workoutsError;
+        }
+
+        setSaveMessage('Weekly plan saved successfully!');
+        await loadSavedPlan(); // Reload to get the saved plan
+      } else {
+        // Save single workout
+        const { error } = await supabase
+          .from('saved_workout_plans')
+          .insert({
+            user_id: user.id,
+            plan_name: generatedPlan.name,
+            plan_description: generatedPlan.description,
+            duration_minutes: generatedPlan.duration,
+            difficulty: generatedPlan.difficulty,
+            equipment: generatedPlan.equipment,
+            category: generatedPlan.category,
+            is_weekly_plan: false,
+            plan_data: { exercises: generatedPlan.exercises }
+          });
+
+        if (error) throw error;
+        setSaveMessage('Workout saved successfully!');
+      }
+
       setWorkoutPlans([...workoutPlans, generatedPlan]);
-      // Could add a success toast here
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      setSaveMessage('Error saving workout. Please try again.');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const markWorkoutComplete = async (workout: WorkoutPlan, date: Date) => {
+    try {
+      const { error } = await supabase
+        .from('workout_plan_completions')
+        .insert({
+          user_id: user.id,
+          saved_plan_id: savedPlan?.id || null,
+          workout_date: date.toISOString().split('T')[0],
+          workout_name: workout.name,
+          day_of_week: workout.dayOfWeek || null,
+          completed_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Reload completions to update UI
+      await loadCompletions();
+      setCompletedWorkouts(prev => new Set([...prev, workout.id]));
+    } catch (error) {
+      console.error('Error marking workout complete:', error);
     }
   };
 
@@ -2224,7 +2413,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                               const dayName = getDayName(date);
                               const dayWorkout = generatedPlan.weeklyWorkouts?.find(w => w.dayOfWeek === dayName);
                               const isToday = isSameDay(date, new Date());
-                              const isCompleted = dayWorkout && completedWorkouts.has(dayWorkout.id);
+                              const dateKey = date.toISOString().split('T')[0];
+                              const hasCompletion = calendarCompletions.has(dateKey);
+                              const isCompleted = dayWorkout && (completedWorkouts.has(dayWorkout.id) || hasCompletion);
 
                               return (
                                 <div
@@ -2257,7 +2448,8 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
                     <div className="grid gap-4">
                       {generatedPlan.weeklyWorkouts?.map((dayWorkout, dayIndex) => {
-                        const isCompleted = completedWorkouts.has(dayWorkout.id);
+                        const isCompleted = completedWorkouts.has(dayWorkout.id) ||
+                          (savedPlan && calendarCompletions.has(`${savedPlan.id}-${dayWorkout.dayOfWeek}`));
                         return (
                           <div key={dayWorkout.id} className={`border rounded-lg p-4 ${
                             isCompleted ? 'border-green-300 bg-green-50' : 'border-gray-200'
@@ -2525,17 +2717,19 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         <WorkoutCompletionModal
           workout={selectedWeeklyWorkout || generatedPlan!}
           userId={user.id}
+          savedPlanId={savedPlan?.id}
           onClose={() => {
             setShowCompletionModal(false);
             setSelectedWeeklyWorkout(null);
           }}
-          onComplete={() => {
+          onComplete={async () => {
             if (selectedWeeklyWorkout) {
               setCompletedWorkouts(prev => new Set([...prev, selectedWeeklyWorkout.id]));
               setCompletionMessage(`${selectedWeeklyWorkout.dayOfWeek} workout completed! Great job! 🎉`);
             } else {
               setCompletionMessage('Workout completed! Great job! 🎉');
             }
+            await loadCompletions();
             setTimeout(() => setCompletionMessage(''), 3000);
             setSelectedWeeklyWorkout(null);
           }}
@@ -2546,6 +2740,13 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50">
           <CheckCircle className="w-5 h-5" />
           <span>{completionMessage}</span>
+        </div>
+      )}
+
+      {saveMessage && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50">
+          <CheckCircle className="w-5 h-5" />
+          <span>{saveMessage}</span>
         </div>
       )}
     </div>
