@@ -4,10 +4,11 @@ import OnboardingFlow from './components/OnboardingFlow';
 import Dashboard from './components/Dashboard';
 import WorkoutPlanner from './components/WorkoutPlanner';
 import ProgressTracker from './components/ProgressTracker';
+import ProgressDashboard from './components/ProgressDashboard';
 import { User, WorkoutPlan } from './types';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'onboarding' | 'dashboard' | 'planner' | 'progress'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'onboarding' | 'dashboard' | 'planner' | 'progress' | 'progressDashboard'>('landing');
   const [user, setUser] = useState<User | null>(null);
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
 
@@ -22,6 +23,10 @@ function App() {
 
   const handleViewProgress = () => {
     setCurrentView('progress');
+  };
+
+  const handleViewProgressDashboard = () => {
+    setCurrentView('progressDashboard');
   };
 
   const handleBackToDashboard = () => {
@@ -41,10 +46,11 @@ function App() {
         <OnboardingFlow onComplete={handleUserCreated} />
       )}
       {currentView === 'dashboard' && user && (
-        <Dashboard 
-          user={user} 
+        <Dashboard
+          user={user}
           onStartPlanning={handleStartPlanning}
           onViewProgress={handleViewProgress}
+          onViewProgressDashboard={handleViewProgressDashboard}
         />
       )}
       {currentView === 'planner' && user && (
@@ -56,8 +62,14 @@ function App() {
         />
       )}
       {currentView === 'progress' && user && (
-        <ProgressTracker 
-          user={user} 
+        <ProgressTracker
+          user={user}
+          onBack={handleBackToDashboard}
+        />
+      )}
+      {currentView === 'progressDashboard' && user && (
+        <ProgressDashboard
+          user={user}
           onBack={handleBackToDashboard}
         />
       )}

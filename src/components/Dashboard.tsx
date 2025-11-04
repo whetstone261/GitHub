@@ -7,9 +7,10 @@ interface DashboardProps {
   user: User;
   onStartPlanning: () => void;
   onViewProgress: () => void;
+  onViewProgressDashboard?: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProgress }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProgress, onViewProgressDashboard }) => {
   const [stats, setStats] = useState({
     totalWorkouts: 0,
     thisWeek: 0,
@@ -151,8 +152,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
                   className="w-full bg-gray-100 text-[#2C2C2C] p-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-left flex items-center"
                 >
                   <TrendingUp className="w-4 h-4 mr-3" />
-                  View Progress
+                  View Calendar
                 </button>
+                {onViewProgressDashboard && (
+                  <button
+                    onClick={onViewProgressDashboard}
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white p-3 rounded-lg font-medium hover:from-orange-600 hover:to-orange-700 transition-colors text-left flex items-center"
+                  >
+                    <Award className="w-4 h-4 mr-3" />
+                    Progress & Achievements
+                  </button>
+                )}
                 <button className="w-full bg-gray-100 text-[#2C2C2C] p-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-left flex items-center">
                   <Target className="w-4 h-4 mr-3" />
                   Update Goals

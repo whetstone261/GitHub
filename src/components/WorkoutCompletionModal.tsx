@@ -108,6 +108,26 @@ export default function WorkoutCompletionModal({
           notes: notes
         });
 
+      // Check for newly unlocked milestones
+      const { data: newMilestones } = await supabase
+        .from('user_milestones')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('unlocked_at', new Date(Date.now() - 5000).toISOString());
+
+      // Send celebration email for new milestones
+      if (newMilestones && newMilestones.length > 0) {
+        const { checkAndSendMilestoneEmail } = await import('../lib/emailService');
+        for (const milestone of newMilestones) {
+          await checkAndSendMilestoneEmail(
+            userId,
+            'Fitness Champion',
+            milestone.milestone_type,
+            milestone.milestone_name
+          );
+        }
+      }
+
       onComplete();
       onClose();
     } catch (error) {
