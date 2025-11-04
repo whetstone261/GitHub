@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X, Clock, Weight } from 'lucide-react';
+import { X, Clock, Weight, CheckCircle } from 'lucide-react';
 import { WorkoutPlan } from '../types';
-import { saveWorkoutCompletion, saveExerciseLogs, ExerciseLog } from '../lib/supabase';
+import { saveWorkoutCompletion, saveExerciseLogs, ExerciseLog, getUserProgress } from '../lib/supabase';
 
 interface WorkoutCompletionModalProps {
   workout: WorkoutPlan;
@@ -32,6 +32,8 @@ export default function WorkoutCompletionModal({
   const [totalTime, setTotalTime] = useState<number>(workout.duration);
   const [notes, setNotes] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [progressUpdate, setProgressUpdate] = useState<any>(null);
 
   const mainExercises = workout.exercises.filter(ex => !ex.isWarmup && !ex.isCooldown);
 
@@ -108,6 +110,10 @@ export default function WorkoutCompletionModal({
           notes: notes
         });
 
+      // Get updated progress data
+      const progress = await getUserProgress(userId);
+      setProgressUpdate(progress);
+
       // Check for newly unlocked milestones
       const { data: newMilestones } = await supabase
         .from('user_milestones')
@@ -128,8 +134,14 @@ export default function WorkoutCompletionModal({
         }
       }
 
-      onComplete();
-      onClose();
+      // Show success message
+      setShowSuccess(true);
+
+      // Auto close after showing success
+      setTimeout(() => {
+        onComplete();
+        onClose();
+      }, 2500);
     } catch (error) {
       console.error('Error completing workout:', error);
       alert('An error occurred while saving your workout. Please check the console for details.');
@@ -137,6 +149,44 @@ export default function WorkoutCompletionModal({
       setIsSaving(false);
     }
   };
+
+  if (showSuccess) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl max-w-md w-full p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-10 h-10 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-[#2C2C2C] mb-2">Workout Saved!</h2>
+          <p className="text-gray-600 mb-4">Your progress has been updated</p>
+
+          {progressUpdate && (
+            <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">Total Workouts</p>
+                  <p className="text-2xl font-bold text-[#0074D9]">{progressUpdate.total_workouts_completed}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Current Streak</p>
+                  <p className="text-2xl font-bold text-orange-500">{progressUpdate.current_streak_days} days</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {progressUpdate?.newly_unlocked_milestones && progressUpdate.newly_unlocked_milestones.length > 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="font-bold text-yellow-800 mb-2">New Achievements!</p>
+              {progressUpdate.newly_unlocked_milestones.map((milestone: string, index: number) => (
+                <p key={index} className="text-yellow-700 text-sm">{milestone}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

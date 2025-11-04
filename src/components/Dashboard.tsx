@@ -130,8 +130,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
                 <h3 className="font-semibold text-[#2C2C2C]">Current Streak</h3>
                 <Award className="w-5 h-5 text-orange-500" />
               </div>
-              <div className="text-2xl font-bold text-[#2C2C2C] mb-2">5 days</div>
-              <div className="text-sm text-orange-600">Keep it up!</div>
+              <div className="text-2xl font-bold text-[#2C2C2C] mb-2">{currentStreak} {currentStreak === 1 ? 'day' : 'days'}</div>
+              <div className="text-sm text-orange-600">{currentStreak > 0 ? 'Keep it up!' : 'Start today!'}</div>
             </div>
           </div>
 

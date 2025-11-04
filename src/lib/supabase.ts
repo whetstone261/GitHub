@@ -185,3 +185,157 @@ export async function getExerciseLogs(workoutCompletionId: string) {
     return [];
   }
 }
+
+export interface ProgressUpdate {
+  total_workouts_completed: number;
+  current_streak_days: number;
+  longest_streak_days: number;
+  last_workout_date: string;
+  newly_unlocked_milestones: string[];
+}
+
+export async function markWorkoutComplete(
+  workoutId: string,
+  userId: string
+): Promise<{ success: boolean; progress?: ProgressUpdate; error?: string }> {
+  if (!supabase) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+
+  try {
+    const { error: updateError } = await supabase
+      .from('saved_workout_plans')
+      .update({
+        status: 'completed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', workoutId)
+      .eq('user_id', userId);
+
+    if (updateError) {
+      console.error('Error marking workout complete:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    const progressData = await getUserProgress(userId);
+
+    return {
+      success: true,
+      progress: progressData
+    };
+  } catch (err: any) {
+    console.error('Exception marking workout complete:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getUserProgress(userId: string): Promise<ProgressUpdate> {
+  if (!supabase) {
+    return {
+      total_workouts_completed: 0,
+      current_streak_days: 0,
+      longest_streak_days: 0,
+      last_workout_date: '',
+      newly_unlocked_milestones: []
+    };
+  }
+
+  try {
+    const { data: profileData, error: profileError } = await supabase
+      .from('user_profiles_extended')
+      .select('total_workouts_completed, current_streak_days, longest_streak_days, last_workout_date')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching user progress:', profileError);
+    }
+
+    const recentTime = new Date(Date.now() - 10000).toISOString();
+    const { data: milestones, error: milestonesError } = await supabase
+      .from('user_milestones')
+      .select('milestone_name')
+      .eq('user_id', userId)
+      .gte('unlocked_at', recentTime);
+
+    if (milestonesError) {
+      console.error('Error fetching milestones:', milestonesError);
+    }
+
+    return {
+      total_workouts_completed: profileData?.total_workouts_completed || 0,
+      current_streak_days: profileData?.current_streak_days || 0,
+      longest_streak_days: profileData?.longest_streak_days || 0,
+      last_workout_date: profileData?.last_workout_date || '',
+      newly_unlocked_milestones: milestones?.map(m => m.milestone_name) || []
+    };
+  } catch (err) {
+    console.error('Exception fetching user progress:', err);
+    return {
+      total_workouts_completed: 0,
+      current_streak_days: 0,
+      longest_streak_days: 0,
+      last_workout_date: '',
+      newly_unlocked_milestones: []
+    };
+  }
+}
+
+export async function calculateStreak(userId: string): Promise<number> {
+  if (!supabase) {
+    return 0;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('workout_plan_completions')
+      .select('workout_date')
+      .eq('user_id', userId)
+      .order('workout_date', { ascending: false })
+      .limit(365);
+
+    if (error) {
+      console.error('Error calculating streak:', error);
+      return 0;
+    }
+
+    if (!data || data.length === 0) {
+      return 0;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    const uniqueDates = Array.from(new Set(data.map(w => w.workout_date))).sort().reverse();
+
+    if (uniqueDates[0] !== todayStr && uniqueDates[0] !== yesterdayStr) {
+      return 0;
+    }
+
+    let streak = 1;
+    let currentDate = new Date(uniqueDates[0]);
+
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const nextExpectedDate = new Date(currentDate);
+      nextExpectedDate.setDate(nextExpectedDate.getDate() - 1);
+      const nextExpectedStr = nextExpectedDate.toISOString().split('T')[0];
+
+      if (uniqueDates[i] === nextExpectedStr) {
+        streak++;
+        currentDate = new Date(uniqueDates[i]);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  } catch (err) {
+    console.error('Exception calculating streak:', err);
+    return 0;
+  }
+}
