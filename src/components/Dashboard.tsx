@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Target, Play, Award, Bell } from 'lucide-react';
 import { User } from '../types';
-import { getWorkoutStats } from '../lib/supabase';
+import { getWorkoutStats, calculateStreak, supabase } from '../lib/supabase';
 
 interface DashboardProps {
   user: User;
@@ -16,6 +16,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
     thisWeek: 0,
     completions: []
   });
+  const [currentStreak, setCurrentStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +27,22 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
     setIsLoading(true);
     const data = await getWorkoutStats(user.id);
     setStats(data);
+
+    if (supabase) {
+      const { data: profileData } = await supabase
+        .from('user_profiles_extended')
+        .select('current_streak_days')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profileData) {
+        setCurrentStreak(profileData.current_streak_days || 0);
+      } else {
+        const streak = await calculateStreak(user.id);
+        setCurrentStreak(streak);
+      }
+    }
+
     setIsLoading(false);
   };
 
