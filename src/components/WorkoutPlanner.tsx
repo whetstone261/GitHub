@@ -1771,6 +1771,255 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       sets: 3,
       description: 'Isolation exercise for triceps',
       muscleGroups: ['triceps']
+    },
+    {
+      id: '110',
+      name: 'Pistol Squats',
+      category: 'legs',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 8,
+      sets: 3,
+      description: 'Single-leg squat requiring strength and balance',
+      muscleGroups: ['quads', 'glutes', 'core']
+    },
+    {
+      id: '111',
+      name: 'Muscle-ups',
+      category: 'back',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 5,
+      sets: 4,
+      description: 'Advanced pull-up transitioning to a dip',
+      muscleGroups: ['back', 'chest', 'triceps', 'shoulders']
+    },
+    {
+      id: '112',
+      name: 'One-Arm Push-ups',
+      category: 'chest',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 150,
+      reps: 6,
+      sets: 3,
+      description: 'Single-arm push-up for extreme upper body strength',
+      muscleGroups: ['chest', 'shoulders', 'triceps', 'core']
+    },
+    {
+      id: '113',
+      name: 'Handstand Push-ups',
+      category: 'shoulders',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 8,
+      sets: 3,
+      description: 'Inverted push-up for shoulder strength and balance',
+      muscleGroups: ['shoulders', 'triceps', 'core']
+    },
+    {
+      id: '114',
+      name: 'Dragon Flags',
+      category: 'core',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 8,
+      sets: 3,
+      description: 'Advanced core exercise requiring full-body tension',
+      muscleGroups: ['core', 'abs', 'hip-flexors']
+    },
+    {
+      id: '115',
+      name: 'Weighted Pull-ups',
+      category: 'back',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 240,
+      reps: 6,
+      sets: 4,
+      description: 'Pull-ups with added weight for strength progression',
+      muscleGroups: ['back', 'biceps', 'forearms']
+    },
+    {
+      id: '116',
+      name: 'Clapping Push-ups',
+      category: 'chest',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 150,
+      reps: 10,
+      sets: 3,
+      description: 'Explosive push-up requiring power and speed',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '117',
+      name: 'Archer Pull-ups',
+      category: 'back',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 6,
+      sets: 3,
+      description: 'One-arm assisted pull-up variation',
+      muscleGroups: ['back', 'biceps', 'core']
+    },
+    {
+      id: '118',
+      name: 'L-Sit Hold',
+      category: 'core',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 90,
+      sets: 3,
+      description: 'Static hold with legs extended parallel to ground',
+      muscleGroups: ['core', 'hip-flexors', 'shoulders']
+    },
+    {
+      id: '119',
+      name: 'Planche Lean',
+      category: 'shoulders',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 120,
+      sets: 4,
+      description: 'Advanced calisthenics progression for planche',
+      muscleGroups: ['shoulders', 'core', 'chest']
+    },
+    {
+      id: '120',
+      name: 'Front Lever Hold',
+      category: 'back',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 90,
+      sets: 3,
+      description: 'Static hold parallel to ground on pull-up bar',
+      muscleGroups: ['back', 'core', 'shoulders']
+    },
+    {
+      id: '121',
+      name: 'Weighted Dips',
+      category: 'chest',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 240,
+      reps: 8,
+      sets: 4,
+      description: 'Dips with added weight for increased resistance',
+      muscleGroups: ['chest', 'triceps', 'shoulders']
+    },
+    {
+      id: '122',
+      name: 'Box Jump Overs',
+      category: 'legs',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Explosive jumping over box for power development',
+      muscleGroups: ['legs', 'glutes', 'calves', 'core']
+    },
+    {
+      id: '123',
+      name: 'Snatch',
+      category: 'functional',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 300,
+      reps: 5,
+      sets: 5,
+      description: 'Olympic lift requiring explosive full-body power',
+      muscleGroups: ['full-body', 'shoulders', 'legs', 'back']
+    },
+    {
+      id: '124',
+      name: 'Clean and Jerk',
+      category: 'functional',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 300,
+      reps: 5,
+      sets: 5,
+      description: 'Olympic lift combining power and technique',
+      muscleGroups: ['full-body', 'shoulders', 'legs', 'back']
+    },
+    {
+      id: '125',
+      name: 'Sissy Squats',
+      category: 'legs',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 150,
+      reps: 10,
+      sets: 3,
+      description: 'Advanced quad isolation exercise',
+      muscleGroups: ['quads', 'core']
+    },
+    {
+      id: '126',
+      name: 'Nordic Curls',
+      category: 'legs',
+      equipment: 'none',
+      difficulty: 'advanced',
+      duration: 150,
+      reps: 6,
+      sets: 3,
+      description: 'Eccentric hamstring exercise requiring control',
+      muscleGroups: ['hamstrings', 'core']
+    },
+    {
+      id: '127',
+      name: 'Ring Dips',
+      category: 'chest',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 10,
+      sets: 4,
+      description: 'Dips on unstable rings for enhanced difficulty',
+      muscleGroups: ['chest', 'triceps', 'shoulders', 'core']
+    },
+    {
+      id: '128',
+      name: 'Ring Rows Elevated Feet',
+      category: 'back',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Inverted rows with elevated feet for increased resistance',
+      muscleGroups: ['back', 'biceps', 'core']
+    },
+    {
+      id: '129',
+      name: 'Deficit Deadlifts',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 300,
+      reps: 6,
+      sets: 4,
+      description: 'Deadlift from elevated platform for increased range',
+      muscleGroups: ['hamstrings', 'glutes', 'back', 'core']
+    },
+    {
+      id: '130',
+      name: 'Overhead Squat',
+      category: 'legs',
+      equipment: 'gym',
+      difficulty: 'advanced',
+      duration: 240,
+      reps: 8,
+      sets: 4,
+      description: 'Squat with barbell overhead requiring mobility and strength',
+      muscleGroups: ['quads', 'glutes', 'shoulders', 'core']
     }
   ];
 
@@ -1804,10 +2053,17 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
         (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
 
-      const difficultyMatch =
-        exercise.difficulty === selectedFilters.difficulty ||
-        (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
-        (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
+      // Match difficulty based on user level
+      let difficultyMatch = false;
+      if (selectedFilters.difficulty === 'beginner') {
+        difficultyMatch = exercise.difficulty === 'beginner';
+      } else if (selectedFilters.difficulty === 'intermediate') {
+        difficultyMatch = exercise.difficulty === 'intermediate' || exercise.difficulty === 'beginner';
+      } else if (selectedFilters.difficulty === 'advanced') {
+        // For advanced users: mostly advanced, allow some intermediate but no beginner (except stretches)
+        difficultyMatch = exercise.difficulty === 'advanced' ||
+          (exercise.difficulty === 'intermediate' && exercise.category !== 'flexibility');
+      }
 
       // Enhanced category matching for specific body parts
       const categoryMatch =
@@ -1825,8 +2081,15 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       return equipmentMatch && difficultyMatch && categoryMatch;
     });
 
-    // Prioritize exercises that target underused muscle groups
+    // Prioritize exercises based on difficulty and underused muscle groups
     const prioritizedExercises = filteredExercises.sort((a, b) => {
+      // For advanced users, prioritize advanced difficulty exercises
+      if (selectedFilters.difficulty === 'advanced') {
+        if (a.difficulty === 'advanced' && b.difficulty !== 'advanced') return -1;
+        if (b.difficulty === 'advanced' && a.difficulty !== 'advanced') return 1;
+      }
+
+      // Then prioritize exercises targeting underused muscle groups
       const aTargetsUnderused = underusedMuscles.some(muscle => a.muscleGroups.includes(muscle));
       const bTargetsUnderused = underusedMuscles.some(muscle => b.muscleGroups.includes(muscle));
       if (aTargetsUnderused && !bTargetsUnderused) return -1;
@@ -1928,10 +2191,17 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
           (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
           (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
 
-        const difficultyMatch =
-          exercise.difficulty === selectedFilters.difficulty ||
-          (selectedFilters.difficulty === 'advanced' && exercise.difficulty === 'intermediate') ||
-          (selectedFilters.difficulty === 'intermediate' && exercise.difficulty === 'beginner');
+        // Match difficulty based on user level
+        let difficultyMatch = false;
+        if (selectedFilters.difficulty === 'beginner') {
+          difficultyMatch = exercise.difficulty === 'beginner';
+        } else if (selectedFilters.difficulty === 'intermediate') {
+          difficultyMatch = exercise.difficulty === 'intermediate' || exercise.difficulty === 'beginner';
+        } else if (selectedFilters.difficulty === 'advanced') {
+          // For advanced users: mostly advanced, allow some intermediate but no beginner (except stretches)
+          difficultyMatch = exercise.difficulty === 'advanced' ||
+            (exercise.difficulty === 'intermediate' && exercise.category !== 'flexibility');
+        }
 
         // Enhanced focus matching for specific body parts
         const focusMatch =
