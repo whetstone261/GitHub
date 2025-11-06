@@ -180,10 +180,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
                     Progress & Achievements
                   </button>
                 )}
-                <button className="w-full bg-gray-100 text-[#2C2C2C] p-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-left flex items-center">
-                  <Target className="w-4 h-4 mr-3" />
-                  Update Goals
-                </button>
               </div>
             </div>
 
@@ -210,34 +206,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
           </div>
         </div>
 
-        {/* Today's Recommendation */}
-        <div className="mt-8 bg-white p-6 rounded-xl shadow-sm">
-          <h3 className="font-semibold text-[#2C2C2C] mb-4">Today's AI Recommendation</h3>
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg">
-            <h4 className="font-semibold text-[#2C2C2C] mb-2">Upper Body Strength Focus</h4>
-            <p className="text-gray-600 mb-4">
-              Based on your recent activity, we recommend a 30-minute upper body strength workout. 
-              Perfect for your {user.equipment === 'gym' ? 'gym session' : user.equipment === 'basic' ? 'home setup with basic equipment' : 'bodyweight training'}.
-            </p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-3 py-1 bg-white rounded-full text-sm text-[#0074D9] font-medium">
-                {user.preferredDuration} minutes
-              </span>
-              <span className="px-3 py-1 bg-white rounded-full text-sm text-[#9B59B6] font-medium">
-                {user.fitnessLevel}
-              </span>
-              <span className="px-3 py-1 bg-white rounded-full text-sm text-[#7F8C8D] font-medium">
-                {user.equipment === 'gym' ? 'Gym Equipment' : user.equipment === 'basic' ? 'Basic Equipment' : 'No Equipment'}
-              </span>
-            </div>
-            <button
-              onClick={onStartPlanning}
-              className="bg-[#0074D9] text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Start This Workout
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
