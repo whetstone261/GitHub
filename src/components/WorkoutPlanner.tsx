@@ -2221,9 +2221,60 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     }
   ];
 
+  // Helper function to detect and label equipment requirements for an exercise
+  const addEquipmentLabels = (exercise: Exercise): Exercise => {
+    const nameLower = exercise.name.toLowerCase();
+    const descLower = exercise.description.toLowerCase();
+    const combined = nameLower + ' ' + descLower;
+
+    let equipmentRequired = '';
+    let equipmentOptional = '';
+
+    // Check for required equipment based on exercise name/description
+    if (combined.includes('dumbbell')) equipmentRequired = 'Dumbbells';
+    else if (combined.includes('kettlebell')) equipmentRequired = 'Kettlebell';
+    else if (combined.includes('barbell')) equipmentRequired = 'Barbell';
+    else if (combined.includes('pull-up') || combined.includes('chin-up')) equipmentRequired = 'Pull-up bar';
+    else if (combined.includes('bench press') || combined.includes('bench dip')) equipmentRequired = 'Workout bench';
+    else if (combined.includes('resistance band')) equipmentRequired = 'Resistance bands';
+    else if (combined.includes('medicine ball')) equipmentRequired = 'Medicine ball';
+    else if (combined.includes('stability ball')) equipmentRequired = 'Stability ball';
+    else if (combined.includes('ab wheel')) equipmentRequired = 'Ab wheel';
+    else if (combined.includes('trx') || combined.includes('suspension')) equipmentRequired = 'TRX/Suspension trainer';
+    else if (combined.includes('treadmill')) equipmentRequired = 'Treadmill';
+    else if (combined.includes('bike') || combined.includes('cycling')) equipmentRequired = 'Stationary bike';
+    else if (combined.includes('rowing') || combined.includes('rower')) equipmentRequired = 'Rowing machine';
+    else if (combined.includes('elliptical')) equipmentRequired = 'Elliptical';
+    else if (combined.includes('jump rope')) equipmentRequired = 'Jump rope';
+    else if (combined.includes('battle rope')) equipmentRequired = 'Battle ropes';
+    else if (combined.includes('box jump')) equipmentRequired = 'Box/Platform';
+    else if (combined.includes('squat rack')) equipmentRequired = 'Squat rack';
+    else if (combined.includes('dip bar') || combined.includes('parallel bar')) equipmentRequired = 'Dip bars';
+    else if (combined.includes('foam roller')) equipmentRequired = 'Foam roller';
+    else if (combined.includes('slider') || combined.includes('gliding')) equipmentRequired = 'Sliders';
+    else if (combined.includes('weighted vest')) equipmentRequired = 'Weighted vest';
+    else if (combined.includes('ankle weight')) equipmentRequired = 'Ankle weights';
+    else if (combined.includes('ring')) equipmentRequired = 'Gymnastic rings';
+
+    // Check for optional equipment (exercises that can be done with or without)
+    if (combined.includes('step-up') && !equipmentRequired) equipmentOptional = 'Bench/Platform (or use stairs)';
+    else if (combined.includes('elevated') && exercise.equipment === 'none') equipmentOptional = 'Platform/Box (or use chair)';
+    else if (combined.includes('incline push-up')) equipmentOptional = 'Bench/Platform (or use wall)';
+    else if (combined.includes('decline push-up')) equipmentOptional = 'Platform/Box (or use couch)';
+    else if (combined.includes('hip thrust') && !equipmentRequired) equipmentOptional = 'Bench (or use floor)';
+    else if (combined.includes('goblet squat') && !equipmentRequired) equipmentOptional = 'Dumbbell/Kettlebell';
+    else if ((combined.includes('squat') || combined.includes('lunge')) && exercise.equipment === 'none') equipmentOptional = 'Weights for added resistance';
+
+    return {
+      ...exercise,
+      equipmentRequired: equipmentRequired || undefined,
+      equipmentOptional: equipmentOptional || undefined
+    };
+  };
+
   const generateWorkout = () => {
     setIsGenerating(true);
-    
+
     // Simulate AI generation delay
     setTimeout(() => {
       if (selectedFilters.planType === 'weekly') {
@@ -2417,9 +2468,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       name: `${selectedFilters.focusAreas.length > 0 ? selectedFilters.focusAreas.map(f => f.charAt(0).toUpperCase() + f.slice(1).replace('-', ' ')).join(' + ') : 'Full Body'} Workout`,
       description: `AI-generated ${actualTotalMinutes}-minute workout tailored to your goals${timeDifference > 0 ? ` (target: ${targetMinutes}min)` : ''}`,
       exercises: [
-        ...warmupExercises.map(ex => ({ ...ex, isWarmup: true })),
-        ...selectedExercises,
-        ...cooldownExercises.map(ex => ({ ...ex, isCooldown: true }))
+        ...warmupExercises.map(ex => addEquipmentLabels({ ...ex, isWarmup: true })),
+        ...selectedExercises.map(ex => addEquipmentLabels(ex)),
+        ...cooldownExercises.map(ex => addEquipmentLabels({ ...ex, isCooldown: true }))
       ],
       duration: parseInt(selectedFilters.duration),
       difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
@@ -2527,9 +2578,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         name: `${dayPlan.day} - ${dayPlan.focus.charAt(0).toUpperCase() + dayPlan.focus.slice(1).replace('-', ' ')} Focus`,
         description: `${parseInt(selectedFilters.duration)}-minute ${dayPlan.focus} workout for ${dayPlan.day}`,
         exercises: [
-          ...warmupExercises.map(ex => ({ ...ex, isWarmup: true })),
-          ...selectedExercises,
-          ...cooldownExercises.map(ex => ({ ...ex, isCooldown: true }))
+          ...warmupExercises.map(ex => addEquipmentLabels({ ...ex, isWarmup: true })),
+          ...selectedExercises.map(ex => addEquipmentLabels(ex)),
+          ...cooldownExercises.map(ex => addEquipmentLabels({ ...ex, isCooldown: true }))
         ],
         duration: parseInt(selectedFilters.duration),
         difficulty: selectedFilters.difficulty as 'beginner' | 'intermediate' | 'advanced',
@@ -3046,7 +3097,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                                       </div>
                                       <span className="text-xs text-gray-500 capitalize ml-2">{exercise.difficulty}</span>
                                     </div>
-                                    <div className="flex items-center space-x-2 text-xs">
+                                    <div className="flex flex-wrap items-center gap-2 text-xs">
                                       {exercise.sets && exercise.reps && (
                                         <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded">
                                           {exercise.sets} sets × {exercise.reps} reps
@@ -3062,10 +3113,24 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                                           Rest: {formatTime(exercise.restTime)}
                                         </span>
                                       )}
-                                      <span className="text-gray-500">
-                                        {exercise.equipment === 'none' ? 'No equipment' :
-                                         exercise.equipment === 'basic' ? 'Basic equipment' : 'Gym equipment'}
-                                      </span>
+
+                                      {exercise.equipmentRequired && (
+                                        <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded font-medium border border-orange-200">
+                                          ⚠️ Requires: {exercise.equipmentRequired}
+                                        </span>
+                                      )}
+
+                                      {exercise.equipmentOptional && (
+                                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded border border-green-200">
+                                          💡 Optional: {exercise.equipmentOptional}
+                                        </span>
+                                      )}
+
+                                      {!exercise.equipmentRequired && !exercise.equipmentOptional && exercise.equipment === 'none' && (
+                                        <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200">
+                                          ✓ No equipment needed
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
@@ -3172,7 +3237,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                             <span className="text-sm text-gray-500 capitalize">{exercise.difficulty}</span>
                           </div>
                           <p className="text-gray-600 text-sm mb-3">{exercise.description}</p>
-                          <div className="flex items-center space-x-4 text-sm">
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
                             {exercise.sets && exercise.reps && (
                               <span className="bg-blue-100 text-[#0074D9] px-2 py-1 rounded">
                                 {exercise.sets} sets × {exercise.reps} reps
@@ -3188,6 +3253,25 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                                 Rest: {formatTime(exercise.restTime)}
                               </span>
                             )}
+
+                            {exercise.equipmentRequired && (
+                              <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded font-medium border border-orange-200">
+                                ⚠️ Requires: {exercise.equipmentRequired}
+                              </span>
+                            )}
+
+                            {exercise.equipmentOptional && (
+                              <span className="bg-green-100 text-green-700 px-2 py-1 rounded border border-green-200">
+                                💡 Optional: {exercise.equipmentOptional}
+                              </span>
+                            )}
+
+                            {!exercise.equipmentRequired && !exercise.equipmentOptional && exercise.equipment === 'none' && (
+                              <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200">
+                                ✓ No equipment needed
+                              </span>
+                            )}
+
                             <span className="text-gray-500">
                               {exercise.muscleGroups.join(', ')}
                             </span>

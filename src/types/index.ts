@@ -21,12 +21,17 @@ export interface Exercise {
   name: string;
   category: string;
   equipment: string;
+  equipmentRequired?: string;
+  equipmentOptional?: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   duration: number;
   reps?: number;
   sets?: number;
   description: string;
   muscleGroups: string[];
+  isWarmup?: boolean;
+  isCooldown?: boolean;
+  restTime?: number;
 }
 
 export interface WorkoutPlan {
