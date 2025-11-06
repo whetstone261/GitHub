@@ -2245,56 +2245,48 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       // For basic equipment, check specific equipment requirements
       if (exercise.equipment === 'none') return true;
 
-      // Map exercise equipment tags to user's available equipment
+      // Get user's available equipment
       const userEquipment = user.availableEquipment || [];
-
-      // Check if exercise requires specific equipment
-      const exerciseRequirements: { [key: string]: string[] } = {
-        'dumbbells': ['dumbbells'],
-        'resistance-bands': ['resistance-bands'],
-        'kettlebell': ['kettlebell'],
-        'pull-up-bar': ['pull-up-bar'],
-        'jump-rope': ['jump-rope'],
-        'bench': ['bench'],
-        'stability-ball': ['stability-ball'],
-        'medicine-ball': ['medicine-ball'],
-        'ab-wheel': ['ab-wheel'],
-        'suspension-trainer': ['suspension-trainer'],
-        'dip-bars': ['dip-bars'],
-        'exercise-bike': ['exercise-bike'],
-        'treadmill': ['treadmill'],
-        'rowing-machine': ['rowing-machine'],
-        'elliptical': ['elliptical'],
-        'barbell': ['barbell'],
-        'ankle-weights': ['ankle-weights'],
-        'wrist-weights': ['wrist-weights'],
-        'punching-bag': ['punching-bag'],
-        'box-platform': ['box-platform'],
-        'battle-ropes': ['battle-ropes'],
-        'gymnastic-rings': ['gymnastic-rings']
-      };
+      if (userEquipment.length === 0) return exercise.equipment === 'none';
 
       // If exercise is marked as 'basic', check if it requires specific equipment
       if (exercise.equipment === 'basic') {
         // Check exercise name/description for equipment keywords
         const exerciseLower = (exercise.name + ' ' + exercise.description).toLowerCase();
 
-        // Check specific equipment matches
-        if (exerciseLower.includes('dumbbell') && userEquipment.includes('dumbbells')) return true;
-        if (exerciseLower.includes('kettlebell') && userEquipment.includes('kettlebell')) return true;
-        if (exerciseLower.includes('resistance band') && userEquipment.includes('resistance-bands')) return true;
-        if (exerciseLower.includes('pull-up') && userEquipment.includes('pull-up-bar')) return true;
-        if (exerciseLower.includes('bench') && userEquipment.includes('bench')) return true;
-        if (exerciseLower.includes('medicine ball') && userEquipment.includes('medicine-ball')) return true;
-        if (exerciseLower.includes('ab wheel') && userEquipment.includes('ab-wheel')) return true;
-        if (exerciseLower.includes('dip') && (userEquipment.includes('dip-bars') || userEquipment.includes('bench'))) return true;
-        if (exerciseLower.includes('jump rope') && userEquipment.includes('jump-rope')) return true;
-        if (exerciseLower.includes('suspension') && userEquipment.includes('suspension-trainer')) return true;
-        if (exerciseLower.includes('stability ball') && userEquipment.includes('stability-ball')) return true;
-        if (exerciseLower.includes('box jump') && userEquipment.includes('box-platform')) return true;
-        if (exerciseLower.includes('barbell') && userEquipment.includes('barbell')) return true;
-        if (exerciseLower.includes('battle rope') && userEquipment.includes('battle-ropes')) return true;
-        if (exerciseLower.includes('ring') && userEquipment.includes('gymnastic-rings')) return true;
+        // Helper function to check if user has any variation of equipment
+        const hasEquipment = (keywords: string[], equipmentNames: string[]): boolean => {
+          return keywords.some(keyword => exerciseLower.includes(keyword)) &&
+                 equipmentNames.some(name => userEquipment.some(eq => eq.toLowerCase().includes(name.toLowerCase())));
+        };
+
+        // Check specific equipment matches with new naming
+        if (hasEquipment(['dumbbell'], ['dumbbell'])) return true;
+        if (hasEquipment(['kettlebell'], ['kettlebell'])) return true;
+        if (hasEquipment(['resistance band'], ['resistance band', 'resistance tube', 'mini band', 'loop band'])) return true;
+        if (hasEquipment(['pull-up', 'pull up', 'chin-up', 'chin up'], ['pull-up bar'])) return true;
+        if (hasEquipment(['bench'], ['bench'])) return true;
+        if (hasEquipment(['medicine ball'], ['medicine ball'])) return true;
+        if (hasEquipment(['ab wheel'], ['ab wheel'])) return true;
+        if (hasEquipment(['dip'], ['dip bars', 'parallel bars', 'bench'])) return true;
+        if (hasEquipment(['jump rope'], ['jump rope'])) return true;
+        if (hasEquipment(['suspension', 'trx'], ['trx', 'suspension trainer'])) return true;
+        if (hasEquipment(['stability ball'], ['stability ball'])) return true;
+        if (hasEquipment(['box jump'], ['step platform', 'box'])) return true;
+        if (hasEquipment(['barbell'], ['barbell', 'ez curl bar'])) return true;
+        if (hasEquipment(['battle rope'], ['battle rope'])) return true;
+        if (hasEquipment(['ring'], ['gymnastic rings'])) return true;
+        if (hasEquipment(['treadmill'], ['treadmill'])) return true;
+        if (hasEquipment(['bike', 'cycling'], ['stationary bike'])) return true;
+        if (hasEquipment(['rowing', 'rower'], ['rowing machine'])) return true;
+        if (hasEquipment(['elliptical'], ['elliptical'])) return true;
+        if (hasEquipment(['squat rack'], ['squat rack'])) return true;
+        if (hasEquipment(['weight plate'], ['weight plate'])) return true;
+        if (hasEquipment(['foam roller'], ['foam roller'])) return true;
+        if (hasEquipment(['slider', 'gliding'], ['slider', 'gliding disc'])) return true;
+        if (hasEquipment(['weighted vest'], ['weighted vest'])) return true;
+        if (hasEquipment(['ankle weight'], ['ankle weight'])) return true;
+        if (hasEquipment(['yoga mat'], ['yoga mat'])) return true;
 
         // If no specific equipment found, allow generic basic exercises
         return userEquipment.length > 0;

@@ -12,9 +12,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     name: '',
     email: '',
     fitnessLevel: '',
+    availableEquipment: [] as string[],
     goals: [] as string[],
     equipment: '',
-    availableEquipment: [] as string[],
     workoutFrequency: 3,
     preferredDuration: 30,
     reminderTime: '09:00',
@@ -22,21 +22,33 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     focusAreas: [] as string[]
   });
 
-  const totalSteps = 7;
+  const totalSteps = 6;
 
   const handleNext = () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
       // Complete onboarding
+      // Determine equipment category based on what they have
+      let equipmentCategory: 'none' | 'basic' | 'gym';
+      if (formData.availableEquipment.length === 0) {
+        equipmentCategory = 'none';
+      } else if (formData.availableEquipment.some(eq =>
+        ['Treadmill', 'Stationary bike', 'Rowing machine', 'Elliptical', 'Squat rack', 'Barbell'].includes(eq)
+      )) {
+        equipmentCategory = 'gym';
+      } else {
+        equipmentCategory = 'basic';
+      }
+
       const newUser: User = {
         id: Date.now().toString(),
         name: formData.name,
         email: formData.email,
         fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
         goals: formData.goals,
-        equipment: formData.equipment as 'none' | 'basic' | 'gym',
-        availableEquipment: formData.equipment === 'basic' ? formData.availableEquipment : undefined,
+        equipment: equipmentCategory,
+        availableEquipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
         workoutFrequency: formData.workoutFrequency,
         preferredDuration: formData.preferredDuration,
         preferences: {
@@ -74,10 +86,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
       case 1: return formData.name && formData.email;
       case 2: return formData.fitnessLevel;
       case 3: return formData.goals.length > 0;
-      case 4: return formData.equipment;
-      case 5: return formData.equipment !== 'basic' || formData.availableEquipment.length > 0;
+      case 4: return true; // Equipment selection is optional
+      case 5: return true;
       case 6: return true;
-      case 7: return true;
       default: return false;
     }
   };
@@ -192,86 +203,98 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
 
           {step === 4 && (
             <div>
-              <h2 className="text-2xl font-bold text-[#2C2C2C] mb-6">What equipment do you have?</h2>
-              <div className="grid gap-4">
-                {[
-                  { id: 'none', title: 'No Equipment', description: 'Bodyweight exercises only', icon: Home },
-                  { id: 'basic', title: 'Basic Equipment', description: 'Dumbbells, resistance bands, yoga mat', icon: Dumbbell },
-                  { id: 'gym', title: 'Full Gym Access', description: 'Complete gym with all equipment', icon: Dumbbell }
-                ].map((option) => {
-                  const IconComponent = option.icon;
-                  return (
+              <h2 className="text-2xl font-bold text-[#2C2C2C] mb-6">What equipment do you have at home?</h2>
+              <p className="text-gray-600 mb-6">Select all that apply (or skip if you don't have any equipment)</p>
+
+              <div className="max-h-[500px] overflow-y-auto pr-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    "Yoga mat",
+                    "Resistance bands (light)",
+                    "Resistance bands (medium)",
+                    "Resistance bands (heavy)",
+                    "Pull-up bar (door frame)",
+                    "Adjustable dumbbells",
+                    "Fixed-weight dumbbells (5–10 lb)",
+                    "Fixed-weight dumbbells (10–20 lb)",
+                    "Fixed-weight dumbbells (20–30 lb)",
+                    "Kettlebell (light)",
+                    "Kettlebell (medium)",
+                    "Kettlebell (heavy)",
+                    "Adjustable bench",
+                    "Step platform or box",
+                    "Foam roller",
+                    "Medicine ball",
+                    "Stability ball",
+                    "Ab wheel",
+                    "Jump rope",
+                    "Mini bands / loop bands",
+                    "Sliders / gliding discs",
+                    "Weight plates",
+                    "EZ curl bar",
+                    "Barbell",
+                    "Squat rack",
+                    "Dip bars / parallel bars",
+                    "TRX or suspension trainer",
+                    "Treadmill",
+                    "Stationary bike",
+                    "Rowing machine",
+                    "Elliptical",
+                    "Stair stepper",
+                    "Punching bag",
+                    "Battle ropes",
+                    "Weighted vest",
+                    "Pull-up assist band",
+                    "Door anchor for bands",
+                    "Push-up handles",
+                    "Foam blocks / yoga blocks",
+                    "Balance board / BOSU ball",
+                    "Ankle weights",
+                    "Hand grippers",
+                    "Resistance tubes with handles",
+                    "Pilates ring",
+                    "Workout bench (flat only)",
+                    "Workout bench (adjustable incline/decline)",
+                    "Workout gloves",
+                    "Mat towel"
+                  ].map((item) => (
                     <button
-                      key={option.id}
-                      onClick={() => updateFormData('equipment', option.id)}
-                      className={`p-4 text-left border-2 rounded-lg transition-all ${
-                        formData.equipment === option.id
+                      key={item}
+                      onClick={() => toggleArrayItem('availableEquipment', item)}
+                      className={`p-3 text-left border-2 rounded-lg transition-all text-sm ${
+                        formData.availableEquipment.includes(item)
                           ? 'border-[#0074D9] bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-center mb-2">
-                        <IconComponent className="w-5 h-5 text-[#0074D9] mr-3" />
-                        <span className="font-semibold text-[#2C2C2C]">{option.title}</span>
+                      <div className="flex items-center">
+                        <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center ${
+                          formData.availableEquipment.includes(item)
+                            ? 'bg-[#0074D9] border-[#0074D9]'
+                            : 'border-gray-300'
+                        }`}>
+                          {formData.availableEquipment.includes(item) && (
+                            <span className="text-white text-xs">✓</span>
+                          )}
+                        </div>
+                        <span className="font-medium text-[#2C2C2C]">{item}</span>
                       </div>
-                      <div className="text-sm text-gray-600">{option.description}</div>
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
+
+              {formData.availableEquipment.length > 0 && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-[#0074D9] font-medium">
+                    {formData.availableEquipment.length} item{formData.availableEquipment.length !== 1 ? 's' : ''} selected
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
-          {step === 5 && formData.equipment === 'basic' && (
-            <div>
-              <h2 className="text-2xl font-bold text-[#2C2C2C] mb-6">Select your available equipment</h2>
-              <p className="text-gray-600 mb-6">Choose all the equipment you have access to at home</p>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {[
-                  { id: 'dumbbells', name: 'Dumbbells', icon: '🏋️' },
-                  { id: 'resistance-bands', name: 'Resistance Bands', icon: '🎗️' },
-                  { id: 'kettlebell', name: 'Kettlebell', icon: '⚫' },
-                  { id: 'pull-up-bar', name: 'Pull-up Bar', icon: '🔧' },
-                  { id: 'yoga-mat', name: 'Yoga Mat', icon: '🧘' },
-                  { id: 'jump-rope', name: 'Jump Rope', icon: '🪢' },
-                  { id: 'bench', name: 'Workout Bench', icon: '🪑' },
-                  { id: 'stability-ball', name: 'Stability Ball', icon: '⚽' },
-                  { id: 'medicine-ball', name: 'Medicine Ball', icon: '🏀' },
-                  { id: 'foam-roller', name: 'Foam Roller', icon: '📜' },
-                  { id: 'ab-wheel', name: 'Ab Wheel', icon: '⭕' },
-                  { id: 'suspension-trainer', name: 'Suspension Trainer (TRX)', icon: '🎪' },
-                  { id: 'dip-bars', name: 'Dip Bars/Parallettes', icon: '⚖️' },
-                  { id: 'exercise-bike', name: 'Stationary Bike', icon: '🚴' },
-                  { id: 'treadmill', name: 'Treadmill', icon: '🏃' },
-                  { id: 'rowing-machine', name: 'Rowing Machine', icon: '🚣' },
-                  { id: 'elliptical', name: 'Elliptical', icon: '⭕' },
-                  { id: 'barbell', name: 'Barbell & Weights', icon: '💪' },
-                  { id: 'ankle-weights', name: 'Ankle Weights', icon: '👟' },
-                  { id: 'wrist-weights', name: 'Wrist Weights', icon: '⌚' },
-                  { id: 'punching-bag', name: 'Punching Bag', icon: '🥊' },
-                  { id: 'box-platform', name: 'Plyometric Box/Platform', icon: '📦' },
-                  { id: 'battle-ropes', name: 'Battle Ropes', icon: '🪢' },
-                  { id: 'gymnastic-rings', name: 'Gymnastic Rings', icon: '⭕' }
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => toggleArrayItem('availableEquipment', item.id)}
-                    className={`p-4 text-center border-2 rounded-lg transition-all ${
-                      formData.availableEquipment.includes(item.id)
-                        ? 'border-[#0074D9] bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="text-3xl mb-2">{item.icon}</div>
-                    <div className="text-sm font-medium text-[#2C2C2C]">{item.name}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 5 && formData.equipment !== 'basic' && (
+          {step === 5 && (
             <div>
               <h2 className="text-2xl font-bold text-[#2C2C2C] mb-6">Set your schedule</h2>
               <div className="space-y-6">
@@ -316,50 +339,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
           )}
 
           {step === 6 && (
-            <div>
-              <h2 className="text-2xl font-bold text-[#2C2C2C] mb-6">Set your schedule</h2>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Workouts per week: {formData.workoutFrequency}
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="7"
-                    value={formData.workoutFrequency}
-                    onChange={(e) => updateFormData('workoutFrequency', parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>1</span>
-                    <span>7</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preferred workout duration: {formData.preferredDuration} minutes
-                  </label>
-                  <input
-                    type="range"
-                    min="15"
-                    max="90"
-                    step="15"
-                    value={formData.preferredDuration}
-                    onChange={(e) => updateFormData('preferredDuration', parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>15 min</span>
-                    <span>90 min</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 7 && (
             <div>
               <h2 className="text-2xl font-bold text-[#2C2C2C] mb-6">Stay motivated</h2>
               <div className="space-y-6">
