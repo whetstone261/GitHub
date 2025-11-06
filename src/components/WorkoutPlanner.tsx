@@ -2020,6 +2020,204 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       sets: 4,
       description: 'Squat with barbell overhead requiring mobility and strength',
       muscleGroups: ['quads', 'glutes', 'shoulders', 'core']
+    },
+    {
+      id: '131',
+      name: 'Kettlebell Swings',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 20,
+      sets: 4,
+      description: 'Kettlebell explosive hip hinge movement for power',
+      muscleGroups: ['hamstrings', 'glutes', 'core', 'shoulders']
+    },
+    {
+      id: '132',
+      name: 'Kettlebell Turkish Get-up',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 240,
+      reps: 5,
+      sets: 3,
+      description: 'Complex movement from floor to standing with kettlebell overhead',
+      muscleGroups: ['full-body', 'core', 'shoulders']
+    },
+    {
+      id: '133',
+      name: 'Kettlebell Goblet Squat',
+      category: 'legs',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Front-loaded squat holding kettlebell',
+      muscleGroups: ['quads', 'glutes', 'core']
+    },
+    {
+      id: '134',
+      name: 'Treadmill Hill Sprints',
+      category: 'cardio',
+      equipment: 'basic',
+      difficulty: 'advanced',
+      duration: 900,
+      description: 'High-intensity sprints on incline treadmill',
+      muscleGroups: ['legs', 'glutes', 'cardiovascular']
+    },
+    {
+      id: '135',
+      name: 'Stationary Bike Intervals',
+      category: 'cardio',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 1200,
+      description: 'Interval training on stationary bike',
+      muscleGroups: ['legs', 'cardiovascular']
+    },
+    {
+      id: '136',
+      name: 'Rowing Machine Intervals',
+      category: 'cardio',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 1200,
+      description: 'High-intensity rowing with rest periods',
+      muscleGroups: ['back', 'legs', 'arms', 'cardiovascular']
+    },
+    {
+      id: '137',
+      name: 'Resistance Band Chest Press',
+      category: 'chest',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 15,
+      sets: 3,
+      description: 'Chest press using resistance bands',
+      muscleGroups: ['chest', 'shoulders', 'triceps']
+    },
+    {
+      id: '138',
+      name: 'Resistance Band Rows',
+      category: 'back',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 15,
+      sets: 3,
+      description: 'Rowing motion with resistance band',
+      muscleGroups: ['back', 'biceps']
+    },
+    {
+      id: '139',
+      name: 'Resistance Band Squats',
+      category: 'legs',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 15,
+      sets: 3,
+      description: 'Squats with resistance band tension',
+      muscleGroups: ['quads', 'glutes']
+    },
+    {
+      id: '140',
+      name: 'Stability Ball Crunches',
+      category: 'core',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 120,
+      reps: 20,
+      sets: 3,
+      description: 'Crunches on stability ball for core',
+      muscleGroups: ['abs', 'core']
+    },
+    {
+      id: '141',
+      name: 'Stability Ball Pike',
+      category: 'core',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 150,
+      reps: 12,
+      sets: 3,
+      description: 'Pike movement with feet on stability ball',
+      muscleGroups: ['core', 'shoulders', 'abs']
+    },
+    {
+      id: '142',
+      name: 'Medicine Ball Slams',
+      category: 'functional',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 120,
+      reps: 15,
+      sets: 4,
+      description: 'Explosive overhead medicine ball slams',
+      muscleGroups: ['core', 'shoulders', 'back']
+    },
+    {
+      id: '143',
+      name: 'Medicine Ball Russian Twists',
+      category: 'core',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 150,
+      reps: 30,
+      sets: 3,
+      description: 'Rotational core exercise with medicine ball',
+      muscleGroups: ['obliques', 'core']
+    },
+    {
+      id: '144',
+      name: 'TRX Rows',
+      category: 'back',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Suspension trainer rowing exercise',
+      muscleGroups: ['back', 'biceps', 'core']
+    },
+    {
+      id: '145',
+      name: 'TRX Push-ups',
+      category: 'chest',
+      equipment: 'basic',
+      difficulty: 'intermediate',
+      duration: 180,
+      reps: 12,
+      sets: 3,
+      description: 'Push-ups using suspension trainer for instability',
+      muscleGroups: ['chest', 'shoulders', 'triceps', 'core']
+    },
+    {
+      id: '146',
+      name: 'Bench Step-ups',
+      category: 'legs',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 180,
+      reps: 12,
+      sets: 4,
+      description: 'Step-ups using workout bench',
+      muscleGroups: ['quads', 'glutes', 'hamstrings']
+    },
+    {
+      id: '147',
+      name: 'Bench Dips',
+      category: 'arms',
+      equipment: 'basic',
+      difficulty: 'beginner',
+      duration: 150,
+      reps: 15,
+      sets: 3,
+      description: 'Tricep dips using workout bench',
+      muscleGroups: ['triceps', 'shoulders']
     }
   ];
 
@@ -2037,6 +2235,76 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     }, 2000);
   };
 
+  // Helper function to check if exercise matches user's available equipment
+  const exerciseMatchesEquipment = (exercise: Exercise): boolean => {
+    if (selectedFilters.equipment === 'none') {
+      return exercise.equipment === 'none';
+    } else if (selectedFilters.equipment === 'gym') {
+      return ['none', 'basic', 'gym'].includes(exercise.equipment);
+    } else if (selectedFilters.equipment === 'basic') {
+      // For basic equipment, check specific equipment requirements
+      if (exercise.equipment === 'none') return true;
+
+      // Map exercise equipment tags to user's available equipment
+      const userEquipment = user.availableEquipment || [];
+
+      // Check if exercise requires specific equipment
+      const exerciseRequirements: { [key: string]: string[] } = {
+        'dumbbells': ['dumbbells'],
+        'resistance-bands': ['resistance-bands'],
+        'kettlebell': ['kettlebell'],
+        'pull-up-bar': ['pull-up-bar'],
+        'jump-rope': ['jump-rope'],
+        'bench': ['bench'],
+        'stability-ball': ['stability-ball'],
+        'medicine-ball': ['medicine-ball'],
+        'ab-wheel': ['ab-wheel'],
+        'suspension-trainer': ['suspension-trainer'],
+        'dip-bars': ['dip-bars'],
+        'exercise-bike': ['exercise-bike'],
+        'treadmill': ['treadmill'],
+        'rowing-machine': ['rowing-machine'],
+        'elliptical': ['elliptical'],
+        'barbell': ['barbell'],
+        'ankle-weights': ['ankle-weights'],
+        'wrist-weights': ['wrist-weights'],
+        'punching-bag': ['punching-bag'],
+        'box-platform': ['box-platform'],
+        'battle-ropes': ['battle-ropes'],
+        'gymnastic-rings': ['gymnastic-rings']
+      };
+
+      // If exercise is marked as 'basic', check if it requires specific equipment
+      if (exercise.equipment === 'basic') {
+        // Check exercise name/description for equipment keywords
+        const exerciseLower = (exercise.name + ' ' + exercise.description).toLowerCase();
+
+        // Check specific equipment matches
+        if (exerciseLower.includes('dumbbell') && userEquipment.includes('dumbbells')) return true;
+        if (exerciseLower.includes('kettlebell') && userEquipment.includes('kettlebell')) return true;
+        if (exerciseLower.includes('resistance band') && userEquipment.includes('resistance-bands')) return true;
+        if (exerciseLower.includes('pull-up') && userEquipment.includes('pull-up-bar')) return true;
+        if (exerciseLower.includes('bench') && userEquipment.includes('bench')) return true;
+        if (exerciseLower.includes('medicine ball') && userEquipment.includes('medicine-ball')) return true;
+        if (exerciseLower.includes('ab wheel') && userEquipment.includes('ab-wheel')) return true;
+        if (exerciseLower.includes('dip') && (userEquipment.includes('dip-bars') || userEquipment.includes('bench'))) return true;
+        if (exerciseLower.includes('jump rope') && userEquipment.includes('jump-rope')) return true;
+        if (exerciseLower.includes('suspension') && userEquipment.includes('suspension-trainer')) return true;
+        if (exerciseLower.includes('stability ball') && userEquipment.includes('stability-ball')) return true;
+        if (exerciseLower.includes('box jump') && userEquipment.includes('box-platform')) return true;
+        if (exerciseLower.includes('barbell') && userEquipment.includes('barbell')) return true;
+        if (exerciseLower.includes('battle rope') && userEquipment.includes('battle-ropes')) return true;
+        if (exerciseLower.includes('ring') && userEquipment.includes('gymnastic-rings')) return true;
+
+        // If no specific equipment found, allow generic basic exercises
+        return userEquipment.length > 0;
+      }
+
+      return false;
+    }
+    return false;
+  };
+
   const generateSingleWorkout = () => {
     const targetDuration = parseInt(selectedFilters.duration) * 60; // Convert to seconds
     const warmupTime = 5 * 60; // 5 minutes
@@ -2048,10 +2316,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
     // Filter exercises based on user equipment and difficulty
     const filteredExercises = sampleExercises.filter(exercise => {
-      const equipmentMatch =
-        (selectedFilters.equipment === 'none' && exercise.equipment === 'none') ||
-        (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
-        (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
+      const equipmentMatch = exerciseMatchesEquipment(exercise);
 
       // Match difficulty based on user level
       let difficultyMatch = false;
@@ -2186,10 +2451,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
       // Filter exercises for this day's focus
       const filteredExercises = sampleExercises.filter(exercise => {
-        const equipmentMatch =
-          (selectedFilters.equipment === 'none' && exercise.equipment === 'none') ||
-          (selectedFilters.equipment === 'basic' && ['none', 'basic'].includes(exercise.equipment)) ||
-          (selectedFilters.equipment === 'gym' && ['none', 'basic', 'gym'].includes(exercise.equipment));
+        const equipmentMatch = exerciseMatchesEquipment(exercise);
 
         // Match difficulty based on user level
         let difficultyMatch = false;

@@ -5,6 +5,7 @@ export interface User {
   fitnessLevel: 'beginner' | 'intermediate' | 'advanced';
   goals: string[];
   equipment: 'none' | 'basic' | 'gym';
+  availableEquipment?: string[];
   workoutFrequency: number;
   preferredDuration: number;
   preferences: {
