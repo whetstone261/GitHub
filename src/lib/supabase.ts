@@ -23,6 +23,16 @@ export interface WorkoutCompletion {
   total_time_minutes?: number;
   notes?: string;
   created_at?: string;
+  start_time?: string;
+  end_time?: string;
+  workout_type?: string;
+  total_volume?: number;
+  progress_weight?: number;
+  experience_level?: string;
+  goal_focus?: string[];
+  google_calendar_event_id?: string;
+  google_calendar_synced?: boolean;
+  google_calendar_sync_error?: string;
 }
 
 export interface ExerciseLog {
@@ -36,6 +46,8 @@ export interface ExerciseLog {
   duration_seconds?: number;
   notes?: string;
   created_at?: string;
+  equipment_required?: string[];
+  equipment_optional?: string[];
 }
 
 export async function saveWorkoutCompletion(
@@ -278,6 +290,173 @@ export async function getUserProgress(userId: string): Promise<ProgressUpdate> {
       last_workout_date: '',
       newly_unlocked_milestones: []
     };
+  }
+}
+
+export interface EnhancedWorkoutCompletionData {
+  userId: string;
+  workoutName: string;
+  workoutCategory: string;
+  durationMinutes: number;
+  totalTimeMinutes?: number;
+  notes?: string;
+  startTime?: Date;
+  endTime?: Date;
+  workoutType?: 'daily' | 'weekly';
+  progressWeight?: number;
+  experienceLevel?: string;
+  goalFocus?: string[];
+  exercises: ExerciseLog[];
+  savedPlanId?: string;
+}
+
+export interface WorkoutCompletionResult {
+  success: boolean;
+  workoutCompletionId?: string;
+  calendarEventId?: string;
+  progress?: ProgressUpdate;
+  error?: string;
+}
+
+export async function saveEnhancedWorkoutCompletion(
+  data: EnhancedWorkoutCompletionData
+): Promise<WorkoutCompletionResult> {
+  if (!supabase) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+
+  try {
+    const now = new Date();
+    const completedAt = data.endTime || now;
+    const startTime = data.startTime || new Date(completedAt.getTime() - (data.totalTimeMinutes || data.durationMinutes) * 60000);
+
+    // 1. Save workout completion with all fields
+    const { data: completionData, error: completionError } = await supabase
+      .from('workout_completions')
+      .insert({
+        user_id: data.userId,
+        workout_name: data.workoutName,
+        workout_category: data.workoutCategory,
+        duration_minutes: data.durationMinutes,
+        total_time_minutes: data.totalTimeMinutes || data.durationMinutes,
+        notes: data.notes,
+        completed_at: completedAt.toISOString(),
+        start_time: startTime.toISOString(),
+        end_time: completedAt.toISOString(),
+        workout_type: data.workoutType || 'daily',
+        progress_weight: data.progressWeight,
+        experience_level: data.experienceLevel,
+        goal_focus: data.goalFocus,
+        google_calendar_synced: false
+      })
+      .select('id')
+      .single();
+
+    if (completionError) {
+      console.error('Error saving workout completion:', completionError);
+      return { success: false, error: completionError.message };
+    }
+
+    const workoutCompletionId = completionData.id;
+
+    // 2. Save exercise logs with equipment data
+    if (data.exercises && data.exercises.length > 0) {
+      const logsToInsert = data.exercises.map(ex => ({
+        workout_completion_id: workoutCompletionId,
+        exercise_name: ex.exercise_name,
+        exercise_category: ex.exercise_category,
+        sets_completed: ex.sets_completed,
+        reps_completed: ex.reps_completed,
+        weight_used: ex.weight_used,
+        duration_seconds: ex.duration_seconds,
+        notes: ex.notes,
+        equipment_required: ex.equipment_required,
+        equipment_optional: ex.equipment_optional
+      }));
+
+      const { error: logsError } = await supabase
+        .from('exercise_logs')
+        .insert(logsToInsert);
+
+      if (logsError) {
+        console.error('Error saving exercise logs:', logsError);
+      }
+    }
+
+    // 3. Save to workout_plan_completions for calendar view
+    await supabase
+      .from('workout_plan_completions')
+      .insert({
+        user_id: data.userId,
+        saved_plan_id: data.savedPlanId || null,
+        workout_date: completedAt.toISOString().split('T')[0],
+        workout_name: data.workoutName,
+        completed_at: completedAt.toISOString(),
+        notes: data.notes
+      });
+
+    // 4. Get updated progress (triggers are automatic)
+    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for triggers
+    const progress = await getUserProgress(data.userId);
+
+    // 5. Attempt Google Calendar sync
+    let calendarEventId: string | null = null;
+    try {
+      const { data: calendarData } = await supabase
+        .from('google_calendar_tokens')
+        .select('is_connected')
+        .eq('user_id', data.userId)
+        .maybeSingle();
+
+      if (calendarData?.is_connected) {
+        // Get formatted description
+        const { data: descData } = await supabase
+          .rpc('format_workout_description', { p_workout_completion_id: workoutCompletionId });
+
+        const description = descData || 'Workout completed via Guided Gains';
+
+        // Import dynamically to avoid circular dependencies
+        const { createCalendarEvent } = await import('./googleCalendar');
+
+        calendarEventId = await createCalendarEvent(data.userId, {
+          name: data.workoutName,
+          type: data.workoutCategory,
+          focus: data.goalFocus?.join(', ') || data.workoutCategory,
+          startTime: startTime.toISOString(),
+          endTime: completedAt.toISOString(),
+          description: description
+        });
+
+        if (calendarEventId) {
+          await supabase
+            .from('workout_completions')
+            .update({
+              google_calendar_event_id: calendarEventId,
+              google_calendar_synced: true
+            })
+            .eq('id', workoutCompletionId);
+        }
+      }
+    } catch (calError) {
+      console.error('Error syncing to Google Calendar:', calError);
+      await supabase
+        .from('workout_completions')
+        .update({
+          google_calendar_synced: false,
+          google_calendar_sync_error: calError instanceof Error ? calError.message : 'Unknown error'
+        })
+        .eq('id', workoutCompletionId);
+    }
+
+    return {
+      success: true,
+      workoutCompletionId,
+      calendarEventId: calendarEventId || undefined,
+      progress
+    };
+  } catch (err: any) {
+    console.error('Exception in saveEnhancedWorkoutCompletion:', err);
+    return { success: false, error: err.message };
   }
 }
 

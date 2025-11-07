@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X, Clock, Weight, CheckCircle } from 'lucide-react';
+import { X, Clock, Weight, CheckCircle, Calendar, TrendingUp, ExternalLink } from 'lucide-react';
 import { WorkoutPlan } from '../types';
-import { saveWorkoutCompletion, saveExerciseLogs, ExerciseLog, getUserProgress } from '../lib/supabase';
+import { saveEnhancedWorkoutCompletion, EnhancedWorkoutCompletionData, ExerciseLog } from '../lib/supabase';
 
 interface WorkoutCompletionModalProps {
   workout: WorkoutPlan;
@@ -34,6 +34,8 @@ export default function WorkoutCompletionModal({
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [progressUpdate, setProgressUpdate] = useState<any>(null);
+  const [calendarEventId, setCalendarEventId] = useState<string | null>(null);
+  const [workoutCompletionId, setWorkoutCompletionId] = useState<string | null>(null);
 
   const mainExercises = workout.exercises.filter(ex => !ex.isWarmup && !ex.isCooldown);
 
@@ -67,61 +69,57 @@ export default function WorkoutCompletionModal({
     setIsSaving(true);
 
     try {
-      // Save to workout_completions table (existing)
-      const workoutCompletionId = await saveWorkoutCompletion(
-        userId,
-        workout.name,
-        workout.category,
-        workout.duration,
-        totalTime,
-        notes
-      );
-
-      if (!workoutCompletionId) {
-        alert('Failed to save workout completion. Please check the database setup.');
-        setIsSaving(false);
-        return;
-      }
+      const now = new Date();
+      const endTime = now;
+      const startTime = new Date(now.getTime() - totalTime * 60000);
 
       const exerciseLogs: ExerciseLog[] = Object.values(exerciseData).map(ex => ({
-        workout_completion_id: workoutCompletionId,
+        workout_completion_id: '', // Will be set by the save function
         exercise_name: ex.exerciseName,
         exercise_category: ex.exerciseCategory,
         sets_completed: ex.sets,
         reps_completed: ex.reps,
         weight_used: ex.weight,
         duration_seconds: ex.durationMinutes ? ex.durationMinutes * 60 : undefined,
-        notes: ex.notes
+        notes: ex.notes,
+        equipment_required: workout.exercises.find(e => e.id === ex.exerciseId)?.equipmentRequired,
+        equipment_optional: workout.exercises.find(e => e.id === ex.exerciseId)?.equipmentOptional
       }));
 
-      await saveExerciseLogs(workoutCompletionId, exerciseLogs);
+      const completionData: EnhancedWorkoutCompletionData = {
+        userId,
+        workoutName: workout.name,
+        workoutCategory: workout.category,
+        durationMinutes: workout.duration,
+        totalTimeMinutes: totalTime,
+        notes,
+        startTime,
+        endTime,
+        workoutType: 'daily',
+        exercises: exerciseLogs,
+        savedPlanId
+      };
 
-      // Also save to workout_plan_completions for calendar view
+      const result = await saveEnhancedWorkoutCompletion(completionData);
+
+      if (!result.success) {
+        alert('Failed to save workout completion: ' + (result.error || 'Unknown error'));
+        setIsSaving(false);
+        return;
+      }
+
+      setWorkoutCompletionId(result.workoutCompletionId || null);
+      setCalendarEventId(result.calendarEventId || null);
+      setProgressUpdate(result.progress);
+
+      // Check for newly unlocked milestones and send emails
       const { supabase } = await import('../lib/supabase');
-      await supabase
-        .from('workout_plan_completions')
-        .insert({
-          user_id: userId,
-          saved_plan_id: savedPlanId || null,
-          workout_date: new Date().toISOString().split('T')[0],
-          workout_name: workout.name,
-          day_of_week: workout.dayOfWeek || null,
-          completed_at: new Date().toISOString(),
-          notes: notes
-        });
-
-      // Get updated progress data
-      const progress = await getUserProgress(userId);
-      setProgressUpdate(progress);
-
-      // Check for newly unlocked milestones
       const { data: newMilestones } = await supabase
         .from('user_milestones')
         .select('*')
         .eq('user_id', userId)
         .gte('unlocked_at', new Date(Date.now() - 5000).toISOString());
 
-      // Send celebration email for new milestones
       if (newMilestones && newMilestones.length > 0) {
         const { checkAndSendMilestoneEmail } = await import('../lib/emailService');
         for (const milestone of newMilestones) {
@@ -134,14 +132,7 @@ export default function WorkoutCompletionModal({
         }
       }
 
-      // Show success message
       setShowSuccess(true);
-
-      // Auto close after showing success
-      setTimeout(() => {
-        onComplete();
-        onClose();
-      }, 2500);
     } catch (error) {
       console.error('Error completing workout:', error);
       alert('An error occurred while saving your workout. Please check the console for details.');
@@ -151,38 +142,88 @@ export default function WorkoutCompletionModal({
   };
 
   if (showSuccess) {
+    const motivationalMessages = [
+      "Nice work, your consistency is paying off!",
+      "Progress logged — keep building your streak!",
+      "Workout complete! You're crushing your goals!",
+      "Keep the momentum going!",
+      "Another step closer to your best self!"
+    ];
+    const randomMotivation = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl max-w-md w-full p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-10 h-10 text-green-600" />
+        <div className="bg-white rounded-xl max-w-lg w-full p-8">
+          <div className="text-center mb-6">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-12 h-12 text-green-600" />
+            </div>
+            <h2 className="text-3xl font-bold text-[#2C2C2C] mb-2">Workout Complete!</h2>
+            <p className="text-lg text-gray-600">{randomMotivation}</p>
           </div>
-          <h2 className="text-2xl font-bold text-[#2C2C2C] mb-2">Workout Saved!</h2>
-          <p className="text-gray-600 mb-4">Your progress has been updated</p>
 
           {progressUpdate && (
-            <div className="bg-blue-50 rounded-lg p-4 mb-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Total Workouts</p>
-                  <p className="text-2xl font-bold text-[#0074D9]">{progressUpdate.total_workouts_completed}</p>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-4">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="text-center">
+                  <TrendingUp className="w-6 h-6 text-[#0074D9] mx-auto mb-2" />
+                  <p className="text-sm text-gray-600 mb-1">Total Workouts</p>
+                  <p className="text-3xl font-bold text-[#0074D9]">{progressUpdate.total_workouts_completed}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600">Current Streak</p>
-                  <p className="text-2xl font-bold text-orange-500">{progressUpdate.current_streak_days} days</p>
+                <div className="text-center">
+                  <div className="text-2xl mb-2">🔥</div>
+                  <p className="text-sm text-gray-600 mb-1">Current Streak</p>
+                  <p className="text-3xl font-bold text-orange-500">{progressUpdate.current_streak_days} days</p>
                 </div>
               </div>
             </div>
           )}
 
+          {calendarEventId && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 flex items-center">
+              <Calendar className="w-5 h-5 text-green-600 mr-3 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-green-800">Synced to Google Calendar</p>
+                <p className="text-sm text-green-700">Your workout has been added to your calendar</p>
+              </div>
+            </div>
+          )}
+
           {progressUpdate?.newly_unlocked_milestones && progressUpdate.newly_unlocked_milestones.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="font-bold text-yellow-800 mb-2">New Achievements!</p>
+            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
+              <div className="flex items-center mb-2">
+                <div className="text-2xl mr-2">🏆</div>
+                <p className="font-bold text-yellow-800">New Achievements Unlocked!</p>
+              </div>
               {progressUpdate.newly_unlocked_milestones.map((milestone: string, index: number) => (
-                <p key={index} className="text-yellow-700 text-sm">{milestone}</p>
+                <p key={index} className="text-yellow-700 font-medium ml-8">{milestone}</p>
               ))}
             </div>
           )}
+
+          <div className="space-y-3">
+            {workoutCompletionId && (
+              <button
+                onClick={() => {
+                  // TODO: Navigate to workout history/details
+                  alert('View details feature coming soon!');
+                }}
+                className="w-full bg-gray-100 text-[#2C2C2C] py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Workout Details
+              </button>
+            )}
+            <button
+              onClick={() => {
+                onComplete();
+                onClose();
+              }}
+              className="w-full bg-[#0074D9] text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     );
