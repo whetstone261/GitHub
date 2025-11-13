@@ -8,6 +8,7 @@ export interface User {
   availableEquipment?: string[];
   workoutFrequency: number;
   preferredDuration: number;
+  workoutDays?: string[];
   preferences: {
     reminderTime: string;
     notificationsEnabled: boolean;

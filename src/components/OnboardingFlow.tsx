@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, ChevronLeft, Target, Dumbbell, Home, Clock } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Target, Dumbbell, Home, Clock, Calendar } from 'lucide-react';
 import { User } from '../types';
 
 interface OnboardingFlowProps {
@@ -8,6 +8,7 @@ interface OnboardingFlowProps {
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
+  const [showDaysSavedConfirmation, setShowDaysSavedConfirmation] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,15 +18,21 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     equipment: '',
     workoutFrequency: 3,
     preferredDuration: 30,
+    workoutDays: [] as string[],
     reminderTime: '09:00',
     notificationsEnabled: true,
     focusAreas: [] as string[]
   });
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   const handleNext = () => {
     if (step < totalSteps) {
+      // Show confirmation when leaving workout days step
+      if (step === 6 && formData.workoutDays.length > 0) {
+        setShowDaysSavedConfirmation(true);
+        setTimeout(() => setShowDaysSavedConfirmation(false), 3000);
+      }
       setStep(step + 1);
     } else {
       // Complete onboarding
@@ -51,6 +58,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
         availableEquipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
         workoutFrequency: formData.workoutFrequency,
         preferredDuration: formData.preferredDuration,
+        workoutDays: formData.workoutDays.length > 0 ? formData.workoutDays : undefined,
         preferences: {
           reminderTime: formData.reminderTime,
           notificationsEnabled: formData.notificationsEnabled,
@@ -88,13 +96,24 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
       case 3: return formData.goals.length > 0;
       case 4: return true; // Equipment selection is optional
       case 5: return true;
-      case 6: return true;
+      case 6: return formData.workoutDays.length > 0;
+      case 7: return true;
       default: return false;
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
+      {/* Success confirmation toast */}
+      {showDaysSavedConfirmation && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+            <span className="text-xl">✅</span>
+            <span className="font-semibold">Workout days saved successfully!</span>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto px-4">
         {/* Progress Bar */}
         <div className="mb-8">
@@ -339,6 +358,76 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
           )}
 
           {step === 6 && (
+            <div>
+              <div className="flex items-center mb-6">
+                <Calendar className="w-8 h-8 text-[#0074D9] mr-3" />
+                <h2 className="text-2xl font-bold text-[#2C2C2C]">Select Workout Days</h2>
+              </div>
+              <p className="text-gray-600 mb-6">Choose which days of the week you want to schedule your workouts</p>
+
+              <div className="space-y-6">
+                <div className="flex justify-between items-center mb-4">
+                  <button
+                    onClick={() => {
+                      const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                      updateFormData('workoutDays', allDays);
+                    }}
+                    className="text-sm text-[#0074D9] hover:text-blue-700 font-medium"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    onClick={() => updateFormData('workoutDays', [])}
+                    className="text-sm text-gray-600 hover:text-gray-800 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                    <button
+                      key={day}
+                      onClick={() => toggleArrayItem('workoutDays', day)}
+                      className={`
+                        p-4 rounded-xl border-2 transition-all duration-200 text-center
+                        ${formData.workoutDays.includes(day)
+                          ? 'border-[#0074D9] bg-[#0074D9] text-white shadow-md'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-[#0074D9] hover:bg-blue-50'
+                        }
+                      `}
+                    >
+                      <div className="font-bold text-sm mb-1">{day.slice(0, 3)}</div>
+                      <div className="text-xs opacity-90">{day}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {formData.workoutDays.length > 0 && (
+                  <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center">
+                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        <span className="text-white text-sm font-bold">✓</span>
+                      </div>
+                      <p className="text-sm text-green-800 font-medium">
+                        {formData.workoutDays.length} day{formData.workoutDays.length !== 1 ? 's' : ''} selected: {formData.workoutDays.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {formData.workoutDays.length === 0 && (
+                  <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-800">
+                      Please select at least one day to continue
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {step === 7 && (
             <div>
               <h2 className="text-2xl font-bold text-[#2C2C2C] mb-6">Stay motivated</h2>
               <div className="space-y-6">

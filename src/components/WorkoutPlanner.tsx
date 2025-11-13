@@ -208,47 +208,58 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
   // Helper function to get weekly workout schedule with proper spacing
   const getWeeklySchedule = (frequency: number, focusAreas: string[]): { day: string; focus: string }[] => {
-    const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const schedule: { day: string; focus: string }[] = [];
 
     // Determine focus rotation
     const focuses = focusAreas.length > 0 ? focusAreas : ['upper-body', 'lower-body', 'cardio', 'core'];
 
-    // Space workouts evenly throughout the week
-    if (frequency === 3) {
-      // Monday, Wednesday, Friday
-      schedule.push(
-        { day: 'Monday', focus: focuses[0 % focuses.length] },
-        { day: 'Wednesday', focus: focuses[1 % focuses.length] },
-        { day: 'Friday', focus: focuses[2 % focuses.length] }
-      );
-    } else if (frequency === 4) {
-      // Monday, Tuesday, Thursday, Saturday
-      schedule.push(
-        { day: 'Monday', focus: focuses[0 % focuses.length] },
-        { day: 'Tuesday', focus: focuses[1 % focuses.length] },
-        { day: 'Thursday', focus: focuses[2 % focuses.length] },
-        { day: 'Saturday', focus: focuses[3 % focuses.length] }
-      );
-    } else if (frequency === 5) {
-      // Monday, Tuesday, Thursday, Friday, Saturday
-      schedule.push(
-        { day: 'Monday', focus: focuses[0 % focuses.length] },
-        { day: 'Tuesday', focus: focuses[1 % focuses.length] },
-        { day: 'Thursday', focus: focuses[2 % focuses.length] },
-        { day: 'Friday', focus: focuses[3 % focuses.length] },
-        { day: 'Saturday', focus: focuses[4 % focuses.length] }
-      );
-    } else if (frequency === 6) {
-      // Monday through Saturday
-      schedule.push(
-        { day: 'Monday', focus: focuses[0 % focuses.length] },
-        { day: 'Tuesday', focus: focuses[1 % focuses.length] },
-        { day: 'Wednesday', focus: focuses[2 % focuses.length] },
-        { day: 'Thursday', focus: focuses[3 % focuses.length] },
-        { day: 'Friday', focus: focuses[4 % focuses.length] },
-        { day: 'Saturday', focus: focuses[5 % focuses.length] }
-      );
+    // Check if user has selected specific workout days
+    if (user.workoutDays && user.workoutDays.length > 0) {
+      // Use user's selected days and assign focus areas cyclically
+      user.workoutDays.forEach((day, index) => {
+        schedule.push({
+          day: day,
+          focus: focuses[index % focuses.length]
+        });
+      });
+    } else {
+      // Fall back to default frequency-based scheduling
+      // Space workouts evenly throughout the week
+      if (frequency === 3) {
+        // Monday, Wednesday, Friday
+        schedule.push(
+          { day: 'Monday', focus: focuses[0 % focuses.length] },
+          { day: 'Wednesday', focus: focuses[1 % focuses.length] },
+          { day: 'Friday', focus: focuses[2 % focuses.length] }
+        );
+      } else if (frequency === 4) {
+        // Monday, Tuesday, Thursday, Saturday
+        schedule.push(
+          { day: 'Monday', focus: focuses[0 % focuses.length] },
+          { day: 'Tuesday', focus: focuses[1 % focuses.length] },
+          { day: 'Thursday', focus: focuses[2 % focuses.length] },
+          { day: 'Saturday', focus: focuses[3 % focuses.length] }
+        );
+      } else if (frequency === 5) {
+        // Monday, Tuesday, Thursday, Friday, Saturday
+        schedule.push(
+          { day: 'Monday', focus: focuses[0 % focuses.length] },
+          { day: 'Tuesday', focus: focuses[1 % focuses.length] },
+          { day: 'Thursday', focus: focuses[2 % focuses.length] },
+          { day: 'Friday', focus: focuses[3 % focuses.length] },
+          { day: 'Saturday', focus: focuses[4 % focuses.length] }
+        );
+      } else if (frequency === 6) {
+        // Monday through Saturday
+        schedule.push(
+          { day: 'Monday', focus: focuses[0 % focuses.length] },
+          { day: 'Tuesday', focus: focuses[1 % focuses.length] },
+          { day: 'Wednesday', focus: focuses[2 % focuses.length] },
+          { day: 'Thursday', focus: focuses[3 % focuses.length] },
+          { day: 'Friday', focus: focuses[4 % focuses.length] },
+          { day: 'Saturday', focus: focuses[5 % focuses.length] }
+        );
+      }
     }
 
     return schedule;
