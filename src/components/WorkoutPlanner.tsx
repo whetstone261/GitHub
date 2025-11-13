@@ -22,6 +22,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
   const [generatedPlan, setGeneratedPlan] = useState<WorkoutPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [weeklyFrequency, setWeeklyFrequency] = useState(user.workoutFrequency);
+  const [selectedWorkoutDays, setSelectedWorkoutDays] = useState<string[]>([]);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionMessage, setCompletionMessage] = useState('');
   const [selectedWeeklyWorkout, setSelectedWeeklyWorkout] = useState<WorkoutPlan | null>(null);
@@ -213,10 +214,10 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     // Determine focus rotation
     const focuses = focusAreas.length > 0 ? focusAreas : ['upper-body', 'lower-body', 'cardio', 'core'];
 
-    // Check if user has selected specific workout days
-    if (user.workoutDays && user.workoutDays.length > 0) {
-      // Use user's selected days and assign focus areas cyclically
-      user.workoutDays.forEach((day, index) => {
+    // Check if user has selected specific workout days in the planner
+    if (selectedWorkoutDays.length > 0) {
+      // Use selected days from planner and assign focus areas cyclically
+      selectedWorkoutDays.forEach((day, index) => {
         schedule.push({
           day: day,
           focus: focuses[index % focuses.length]
@@ -2781,24 +2782,73 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
               </div>
 
               {selectedFilters.planType === 'weekly' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Workouts per week: {weeklyFrequency}
-                  </label>
-                  <input
-                    type="range"
-                    min="3"
-                    max="6"
-                    value={weeklyFrequency}
-                    onChange={(e) => setWeeklyFrequency(parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>3 days</span>
-                    <span>6 days</span>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-600">
-                    <strong>Rest days:</strong> {getRestDays(weeklyFrequency).join(', ')}
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        <Calendar className="w-4 h-4 inline mr-2" />
+                        Select Workout Days
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSelectedWorkoutDays(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])}
+                          className="text-xs text-[#0074D9] hover:text-blue-700 font-medium"
+                        >
+                          All
+                        </button>
+                        <button
+                          onClick={() => setSelectedWorkoutDays([])}
+                          className="text-xs text-gray-600 hover:text-gray-800 font-medium"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-2">
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dayShort, index) => {
+                        const fullDay = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][index];
+                        const isSelected = selectedWorkoutDays.includes(fullDay);
+                        return (
+                          <button
+                            key={fullDay}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedWorkoutDays(prev => prev.filter(d => d !== fullDay));
+                              } else {
+                                setSelectedWorkoutDays(prev => [...prev, fullDay]);
+                              }
+                            }}
+                            className={`
+                              p-3 rounded-lg border-2 transition-all duration-200 text-center text-sm font-semibold
+                              ${isSelected
+                                ? 'border-[#0074D9] bg-[#0074D9] text-white shadow-md'
+                                : 'border-gray-300 bg-white text-gray-700 hover:border-[#0074D9] hover:bg-blue-50'
+                              }
+                            `}
+                          >
+                            {dayShort}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {selectedWorkoutDays.length > 0 && (
+                      <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <p className="text-sm text-green-800">
+                          <span className="font-semibold">{selectedWorkoutDays.length} days selected:</span>{' '}
+                          {selectedWorkoutDays.join(', ')}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedWorkoutDays.length === 0 && (
+                      <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <p className="text-sm text-yellow-800">
+                          Please select at least one day for your weekly plan
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -2917,9 +2967,9 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
               <button
                 onClick={generateWorkout}
-                disabled={isGenerating}
+                disabled={isGenerating || (selectedFilters.planType === 'weekly' && selectedWorkoutDays.length === 0)}
                 className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                  isGenerating
+                  isGenerating || (selectedFilters.planType === 'weekly' && selectedWorkoutDays.length === 0)
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-[#0074D9] text-white hover:bg-blue-700'
                 }`}
