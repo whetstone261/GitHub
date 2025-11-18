@@ -166,8 +166,24 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSignUp, onSignIn, isLoading, erro
 
           {/* Error Message */}
           {(error || localError) && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-700">{error || localError}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-700 font-medium mb-2">{error || localError}</p>
+              {(error || localError).includes('environment variables') && (
+                <div className="mt-2 pt-2 border-t border-red-200">
+                  <p className="text-xs text-red-600 font-semibold mb-1">📖 Quick Fix:</p>
+                  <p className="text-xs text-red-600">
+                    Open your browser console (F12) for detailed setup instructions, or see the 
+                    <a 
+                      href="https://github.com/whetstone261/GitHub/blob/main/DEPLOYMENT_ENVIRONMENT_SETUP.md" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="underline ml-1 font-medium"
+                    >
+                      deployment guide
+                    </a>.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

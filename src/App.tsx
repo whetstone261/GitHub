@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import WorkoutPlanner from './components/WorkoutPlanner';
 import ProgressTracker from './components/ProgressTracker';
 import ProgressDashboard from './components/ProgressDashboard';
+import ConfigurationBanner from './components/ConfigurationBanner';
 import { User, WorkoutPlan } from './types';
 import { getCurrentUser, getUserProfile } from './lib/supabase';
 
@@ -65,7 +66,7 @@ function App() {
     }
   };
 
-  const handleUserCreated = (userData: User, isReturningUser: boolean = false) => {
+  const handleUserCreated = (userData: User) => {
     setUser(userData);
     setCurrentView('dashboard');
   };
@@ -118,6 +119,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
+      <ConfigurationBanner />
       {currentView === 'landing' && (
         <LandingPage onGetStarted={handleGetStarted} />
       )}
