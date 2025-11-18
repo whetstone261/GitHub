@@ -518,3 +518,167 @@ export async function calculateStreak(userId: string): Promise<number> {
     return 0;
   }
 }
+
+// Authentication Functions
+export interface UserProfile {
+  user_id: string;
+  name: string;
+  email: string;
+  fitness_level: 'beginner' | 'intermediate' | 'advanced';
+  goals: string[];
+  equipment: 'none' | 'basic' | 'gym';
+  available_equipment?: string[];
+  workout_frequency: number;
+  preferred_duration: number;
+  workout_days?: string[];
+  reminder_time: string;
+  notifications_enabled: boolean;
+  focus_areas: string[];
+}
+
+export async function signUp(email: string, password: string, profile: Omit<UserProfile, 'user_id' | 'email'>) {
+  if (!supabase) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+
+  try {
+    // Create auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError) {
+      return { success: false, error: authError.message };
+    }
+
+    if (!authData.user) {
+      return { success: false, error: 'User creation failed' };
+    }
+
+    // Create user profile
+    const { error: profileError } = await supabase
+      .from('user_profiles_extended')
+      .insert({
+        user_id: authData.user.id,
+        email: email,
+        name: profile.name,
+        fitness_level: profile.fitness_level,
+        goals: profile.goals,
+        equipment: profile.equipment,
+        available_equipment: profile.available_equipment || [],
+        workout_frequency: profile.workout_frequency,
+        preferred_duration: profile.preferred_duration,
+        workout_days: profile.workout_days || [],
+        reminder_time: profile.reminder_time,
+        notifications_enabled: profile.notifications_enabled,
+        focus_areas: profile.focus_areas,
+        email_opt_in: profile.notifications_enabled,
+      });
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      return { success: false, error: 'Failed to create user profile' };
+    }
+
+    return { success: true, user: authData.user };
+  } catch (err: any) {
+    console.error('Sign up exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function signIn(email: string, password: string) {
+  if (!supabase) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    if (!data.user) {
+      return { success: false, error: 'Sign in failed' };
+    }
+
+    // Fetch user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles_extended')
+      .select('*')
+      .eq('user_id', data.user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Profile fetch error:', profileError);
+      return { success: false, error: 'Failed to fetch user profile' };
+    }
+
+    return { success: true, user: data.user, profile };
+  } catch (err: any) {
+    console.error('Sign in exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function signOut() {
+  if (!supabase) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+
+  try {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Sign out exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getCurrentUser() {
+  if (!supabase) {
+    return null;
+  }
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+  } catch (err) {
+    console.error('Get current user exception:', err);
+    return null;
+  }
+}
+
+export async function getUserProfile(userId: string) {
+  if (!supabase) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles_extended')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Get user profile error:', error);
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error('Get user profile exception:', err);
+    return null;
+  }
+}

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronRight, ChevronLeft, Target, Dumbbell, Home, Clock, Calendar } from 'lucide-react';
 import { User } from '../types';
+import AuthForm from './AuthForm';
+import { signUp, signIn } from '../lib/supabase';
 
 interface OnboardingFlowProps {
-  onComplete: (user: User) => void;
+  onComplete: (user: User, skipAuth?: boolean) => void;
 }
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
@@ -20,7 +22,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     focusAreas: [] as string[]
   });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
+  const [authError, setAuthError] = useState('');
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   const handleNext = () => {
     if (step < totalSteps) {
@@ -79,6 +83,98 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     }));
   };
 
+  // Auth handlers
+  const handleSignUp = async (email: string, password: string, name: string) => {
+    setIsAuthLoading(true);
+    setAuthError('');
+
+    // Determine equipment category
+    let equipmentCategory: 'none' | 'basic' | 'gym';
+    if (formData.availableEquipment.length === 0) {
+      equipmentCategory = 'none';
+    } else if (formData.availableEquipment.some(eq =>
+      ['Treadmill', 'Stationary bike', 'Rowing machine', 'Elliptical', 'Squat rack', 'Barbell'].includes(eq)
+    )) {
+      equipmentCategory = 'gym';
+    } else {
+      equipmentCategory = 'basic';
+    }
+
+    const result = await signUp(email, password, {
+      name,
+      fitness_level: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
+      goals: formData.goals,
+      equipment: equipmentCategory,
+      available_equipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
+      workout_frequency: 3,
+      preferred_duration: 30,
+      reminder_time: formData.reminderTime,
+      notifications_enabled: formData.notificationsEnabled,
+      focus_areas: formData.focusAreas,
+    });
+
+    setIsAuthLoading(false);
+
+    if (result.success) {
+      // Create user object and complete onboarding
+      const newUser: User = {
+        id: result.user!.id,
+        name,
+        email,
+        fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
+        goals: formData.goals,
+        equipment: equipmentCategory,
+        availableEquipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
+        workoutFrequency: 3,
+        preferredDuration: 30,
+        preferences: {
+          reminderTime: formData.reminderTime,
+          notificationsEnabled: formData.notificationsEnabled,
+          focusAreas: formData.focusAreas,
+        },
+        createdAt: new Date(),
+      };
+      onComplete(newUser, false);
+    } else {
+      setAuthError(result.error || 'Sign up failed');
+    }
+  };
+
+  const handleSignIn = async (email: string, password: string) => {
+    setIsAuthLoading(true);
+    setAuthError('');
+
+    const result = await signIn(email, password);
+
+    setIsAuthLoading(false);
+
+    if (result.success && result.profile) {
+      // User exists, create user object from profile
+      const profile = result.profile;
+      const newUser: User = {
+        id: result.user!.id,
+        name: profile.name,
+        email: profile.email,
+        fitnessLevel: profile.fitness_level,
+        goals: profile.goals,
+        equipment: profile.equipment,
+        availableEquipment: profile.available_equipment,
+        workoutFrequency: profile.workout_frequency,
+        preferredDuration: profile.preferred_duration,
+        workoutDays: profile.workout_days,
+        preferences: {
+          reminderTime: profile.reminder_time,
+          notificationsEnabled: profile.notifications_enabled,
+          focusAreas: profile.focus_areas,
+        },
+        createdAt: new Date(profile.created_at),
+      };
+      onComplete(newUser, true); // Skip onboarding since user already exists
+    } else {
+      setAuthError(result.error || 'Sign in failed');
+    }
+  };
+
   const isStepValid = () => {
     switch (step) {
       case 1: return formData.name && formData.email;
@@ -86,6 +182,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
       case 3: return formData.goals.length > 0;
       case 4: return true; // Equipment selection is optional
       case 5: return true;
+      case 6: return false; // Auth step - validated by auth form
       default: return false;
     }
   };
@@ -304,7 +401,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
                     className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0074D9] focus:border-transparent"
                   />
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -320,36 +417,62 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
               </div>
             </div>
           )}
+
+          {step === 6 && (
+            <div>
+              <AuthForm
+                onSignUp={handleSignUp}
+                onSignIn={handleSignIn}
+                isLoading={isAuthLoading}
+                error={authError}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Navigation */}
-        <div className="flex justify-between">
-          <button
-            onClick={handleBack}
-            disabled={step === 1}
-            className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
-              step === 1
-                ? 'text-gray-400 cursor-not-allowed'
-                : 'text-[#0074D9] hover:bg-blue-50'
-            }`}
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </button>
-          
-          <button
-            onClick={handleNext}
-            disabled={!isStepValid()}
-            className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
-              isStepValid()
-                ? 'bg-[#0074D9] text-white hover:bg-blue-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {step === totalSteps ? 'Complete Setup' : 'Continue'}
-            {step < totalSteps && <ChevronRight className="w-4 h-4 ml-2" />}
-          </button>
-        </div>
+        {/* Navigation - Hidden on auth step */}
+        {step !== 6 && (
+          <div className="flex justify-between">
+            <button
+              onClick={handleBack}
+              disabled={step === 1}
+              className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
+                step === 1
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-[#0074D9] hover:bg-blue-50'
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </button>
+
+            <button
+              onClick={handleNext}
+              disabled={!isStepValid()}
+              className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
+                isStepValid()
+                  ? 'bg-[#0074D9] text-white hover:bg-blue-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              Continue
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </button>
+          </div>
+        )}
+
+        {/* Back button only on auth step */}
+        {step === 6 && (
+          <div className="mt-4">
+            <button
+              onClick={handleBack}
+              className="flex items-center text-[#0074D9] hover:bg-blue-50 px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back to setup
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
