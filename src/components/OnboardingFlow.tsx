@@ -148,7 +148,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
       // First, check if account already exists
       if (supabase) {
         const { data: existingProfile } = await supabase
-          .from('user_profiles_extended')
+          .from('profiles')
           .select('user_id')
           .eq('email', email)
           .maybeSingle();

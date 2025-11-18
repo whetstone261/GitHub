@@ -544,7 +544,7 @@ export async function signUp(email: string, password: string, profile: Omit<User
   try {
     // Check if user already exists
     const { data: existingUser } = await supabase
-      .from('user_profiles_extended')
+      .from('profiles')
       .select('user_id')
       .eq('email', email)
       .maybeSingle();
@@ -573,7 +573,7 @@ export async function signUp(email: string, password: string, profile: Omit<User
 
     // Check if profile already exists (prevents duplicates)
     const { data: existingProfile } = await supabase
-      .from('user_profiles_extended')
+      .from('profiles')
       .select('user_id')
       .eq('user_id', authData.user.id)
       .maybeSingle();
@@ -583,58 +583,86 @@ export async function signUp(email: string, password: string, profile: Omit<User
       return { success: true, user: authData.user };
     }
 
-    // Create user profile with retry logic
-    let profileCreated = false;
+    // Create user profile and preferences atomically with retry logic
+    let dataCreated = false;
     let attempts = 0;
     const maxAttempts = 3;
     let lastError = null;
 
-    while (!profileCreated && attempts < maxAttempts) {
+    while (!dataCreated && attempts < maxAttempts) {
       attempts++;
 
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles_extended')
-        .insert({
-          user_id: authData.user.id,
-          email: email,
-          name: profile.name,
-          fitness_level: profile.fitness_level,
-          goals: profile.goals,
-          equipment: profile.equipment,
-          available_equipment: profile.available_equipment || [],
-          workout_frequency: profile.workout_frequency,
-          preferred_duration: profile.preferred_duration,
-          workout_days: profile.workout_days || [],
-          reminder_time: profile.reminder_time,
-          notifications_enabled: profile.notifications_enabled,
-          focus_areas: profile.focus_areas,
-          email_opt_in: profile.notifications_enabled,
-        })
-        .select()
-        .single();
+      try {
+        // Step 1: Create profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: authData.user.id,
+            email: email,
+            name: profile.name,
+          })
+          .select()
+          .single();
 
-      if (profileError) {
-        console.error(`Profile creation attempt ${attempts} failed:`, profileError);
-        lastError = profileError;
-
-        // If it's a duplicate key error, profile was created successfully
-        if (profileError.code === '23505') {
-          profileCreated = true;
-          break;
+        if (profileError) {
+          if (profileError.code === '23505') {
+            // Duplicate - profile already exists
+            console.log('Profile already exists (duplicate key)');
+            dataCreated = true;
+            break;
+          }
+          throw profileError;
         }
+
+        console.log('Profile created successfully:', profileData);
+
+        // Step 2: Create onboarding preferences
+        const { data: prefsData, error: prefsError } = await supabase
+          .from('onboarding_preferences')
+          .insert({
+            user_id: authData.user.id,
+            fitness_level: profile.fitness_level,
+            goals: profile.goals,
+            equipment_access: profile.equipment,
+            available_equipment: profile.available_equipment || [],
+            workout_frequency: profile.workout_frequency,
+            preferred_duration: profile.preferred_duration,
+            workout_days: profile.workout_days || [],
+            focus_areas: profile.focus_areas,
+            reminder_time: profile.reminder_time,
+            notifications_enabled: profile.notifications_enabled,
+            email_opt_in: profile.notifications_enabled,
+            email_frequency: 'milestone_only',
+          })
+          .select()
+          .single();
+
+        if (prefsError) {
+          if (prefsError.code === '23505') {
+            // Duplicate - prefs already exist
+            console.log('Preferences already exist (duplicate key)');
+            dataCreated = true;
+            break;
+          }
+          throw prefsError;
+        }
+
+        console.log('Preferences created successfully:', prefsData);
+        dataCreated = true;
+
+      } catch (error: any) {
+        console.error(`Data creation attempt ${attempts} failed:`, error);
+        lastError = error;
 
         // Wait before retry
         if (attempts < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
-      } else {
-        console.log('Profile created successfully:', profileData);
-        profileCreated = true;
       }
     }
 
-    if (!profileCreated) {
-      console.error('Failed to create profile after multiple attempts:', lastError);
+    if (!dataCreated) {
+      console.error('Failed to create user data after multiple attempts:', lastError);
       return {
         success: false,
         error: `Failed to create user profile: ${lastError?.message || 'Unknown error'}`
@@ -669,38 +697,94 @@ export async function signIn(email: string, password: string) {
       return { success: false, error: 'Sign in failed' };
     }
 
-    // Fetch user profile with retry logic
-    let profile = null;
+    // Fetch user data from both tables with retry logic
+    let combinedProfile = null;
     let attempts = 0;
     const maxAttempts = 3;
 
-    while (!profile && attempts < maxAttempts) {
+    while (!combinedProfile && attempts < maxAttempts) {
       attempts++;
 
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles_extended')
-        .select('*')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
+      try {
+        // Fetch profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
 
-      if (profileError) {
-        console.error(`Profile fetch attempt ${attempts} failed:`, profileError);
+        if (profileError) {
+          throw profileError;
+        }
+
+        if (!profileData) {
+          console.warn('User authenticated but profile not found');
+          return { success: true, user: data.user, profile: null };
+        }
+
+        // Fetch preferences
+        const { data: prefsData, error: prefsError } = await supabase
+          .from('onboarding_preferences')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (prefsError) {
+          throw prefsError;
+        }
+
+        if (!prefsData) {
+          console.warn('Profile found but preferences not found');
+          return { success: true, user: data.user, profile: null };
+        }
+
+        // Fetch stats
+        const { data: statsData } = await supabase
+          .from('user_stats')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        // Combine all data into UserProfile format
+        combinedProfile = {
+          user_id: profileData.user_id,
+          email: profileData.email,
+          name: profileData.name,
+          fitness_level: prefsData.fitness_level,
+          goals: prefsData.goals,
+          equipment: prefsData.equipment_access,
+          available_equipment: prefsData.available_equipment,
+          workout_frequency: prefsData.workout_frequency,
+          preferred_duration: prefsData.preferred_duration,
+          workout_days: prefsData.workout_days,
+          focus_areas: prefsData.focus_areas,
+          reminder_time: prefsData.reminder_time,
+          notifications_enabled: prefsData.notifications_enabled,
+          email_opt_in: prefsData.email_opt_in,
+          email_frequency: prefsData.email_frequency,
+          total_workouts_completed: statsData?.total_workouts_completed || 0,
+          current_streak_days: statsData?.current_streak_days || 0,
+          longest_streak_days: statsData?.longest_streak_days || 0,
+          last_workout_date: statsData?.last_workout_date || undefined,
+          created_at: profileData.created_at,
+          updated_at: profileData.updated_at,
+        };
+
+      } catch (fetchError: any) {
+        console.error(`Profile fetch attempt ${attempts} failed:`, fetchError);
         if (attempts < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
-      } else {
-        profile = profileData;
       }
     }
 
-    if (!profile) {
-      console.warn('User authenticated but profile not found');
-      // User exists but no profile - they need to complete onboarding
+    if (!combinedProfile) {
+      console.warn('User authenticated but profile data could not be loaded');
       return { success: true, user: data.user, profile: null };
     }
 
-    console.log('Profile loaded successfully:', profile);
-    return { success: true, user: data.user, profile };
+    console.log('Profile loaded successfully');
+    return { success: true, user: data.user, profile: combinedProfile };
   } catch (err: any) {
     console.error('Sign in exception:', err);
     return { success: false, error: err.message };
@@ -746,18 +830,61 @@ export async function getUserProfile(userId: string) {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('user_profiles_extended')
+    // Fetch profile
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (error) {
-      console.error('Get user profile error:', error);
+    if (profileError || !profileData) {
+      console.error('Get user profile error:', profileError);
       return null;
     }
 
-    return data;
+    // Fetch preferences
+    const { data: prefsData, error: prefsError } = await supabase
+      .from('onboarding_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (prefsError || !prefsData) {
+      console.error('Get preferences error:', prefsError);
+      return null;
+    }
+
+    // Fetch stats
+    const { data: statsData } = await supabase
+      .from('user_stats')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    // Combine into UserProfile format
+    return {
+      user_id: profileData.user_id,
+      email: profileData.email,
+      name: profileData.name,
+      fitness_level: prefsData.fitness_level,
+      goals: prefsData.goals,
+      equipment: prefsData.equipment_access,
+      available_equipment: prefsData.available_equipment,
+      workout_frequency: prefsData.workout_frequency,
+      preferred_duration: prefsData.preferred_duration,
+      workout_days: prefsData.workout_days,
+      focus_areas: prefsData.focus_areas,
+      reminder_time: prefsData.reminder_time,
+      notifications_enabled: prefsData.notifications_enabled,
+      email_opt_in: prefsData.email_opt_in,
+      email_frequency: prefsData.email_frequency,
+      total_workouts_completed: statsData?.total_workouts_completed || 0,
+      current_streak_days: statsData?.current_streak_days || 0,
+      longest_streak_days: statsData?.longest_streak_days || 0,
+      last_workout_date: statsData?.last_workout_date || undefined,
+      created_at: profileData.created_at,
+      updated_at: profileData.updated_at,
+    };
   } catch (err) {
     console.error('Get user profile exception:', err);
     return null;
@@ -770,22 +897,47 @@ export async function updateUserProfile(userId: string, profile: Partial<Omit<Us
   }
 
   try {
-    const { data, error } = await supabase
-      .from('user_profiles_extended')
-      .update({
-        ...profile,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', userId)
-      .select()
-      .single();
+    // Update profile if name is provided
+    if (profile.name) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ name: profile.name })
+        .eq('user_id', userId);
 
-    if (error) {
-      console.error('Update profile error:', error);
-      return { success: false, error: error.message };
+      if (profileError) {
+        console.error('Update profile error:', profileError);
+        return { success: false, error: profileError.message };
+      }
     }
 
-    return { success: true, data };
+    // Update preferences
+    const prefsUpdate: any = {};
+    if (profile.fitness_level) prefsUpdate.fitness_level = profile.fitness_level;
+    if (profile.goals) prefsUpdate.goals = profile.goals;
+    if (profile.equipment) prefsUpdate.equipment_access = profile.equipment;
+    if (profile.available_equipment) prefsUpdate.available_equipment = profile.available_equipment;
+    if (profile.workout_frequency) prefsUpdate.workout_frequency = profile.workout_frequency;
+    if (profile.preferred_duration) prefsUpdate.preferred_duration = profile.preferred_duration;
+    if (profile.workout_days) prefsUpdate.workout_days = profile.workout_days;
+    if (profile.focus_areas) prefsUpdate.focus_areas = profile.focus_areas;
+    if (profile.reminder_time) prefsUpdate.reminder_time = profile.reminder_time;
+    if (profile.notifications_enabled !== undefined) prefsUpdate.notifications_enabled = profile.notifications_enabled;
+    if (profile.email_opt_in !== undefined) prefsUpdate.email_opt_in = profile.email_opt_in;
+    if (profile.email_frequency) prefsUpdate.email_frequency = profile.email_frequency;
+
+    if (Object.keys(prefsUpdate).length > 0) {
+      const { error: prefsError } = await supabase
+        .from('onboarding_preferences')
+        .update(prefsUpdate)
+        .eq('user_id', userId);
+
+      if (prefsError) {
+        console.error('Update preferences error:', prefsError);
+        return { success: false, error: prefsError.message };
+      }
+    }
+
+    return { success: true, data: profile };
   } catch (err: any) {
     console.error('Update profile exception:', err);
     return { success: false, error: err.message };
@@ -800,7 +952,7 @@ export async function createOrUpdateProfile(userId: string, email: string, profi
   try {
     // Check if profile exists
     const { data: existingProfile } = await supabase
-      .from('user_profiles_extended')
+      .from('profiles')
       .select('user_id')
       .eq('user_id', userId)
       .maybeSingle();
@@ -810,34 +962,44 @@ export async function createOrUpdateProfile(userId: string, email: string, profi
       const result = await updateUserProfile(userId, profile);
       return result;
     } else {
-      // Create new profile
-      const { data, error } = await supabase
-        .from('user_profiles_extended')
+      // Create new profile and preferences
+      const { error: profileError } = await supabase
+        .from('profiles')
         .insert({
           user_id: userId,
           email: email,
           name: profile.name,
+        });
+
+      if (profileError) {
+        console.error('Create profile error:', profileError);
+        return { success: false, error: profileError.message };
+      }
+
+      const { error: prefsError } = await supabase
+        .from('onboarding_preferences')
+        .insert({
+          user_id: userId,
           fitness_level: profile.fitness_level,
           goals: profile.goals,
-          equipment: profile.equipment,
+          equipment_access: profile.equipment,
           available_equipment: profile.available_equipment || [],
           workout_frequency: profile.workout_frequency,
           preferred_duration: profile.preferred_duration,
           workout_days: profile.workout_days || [],
+          focus_areas: profile.focus_areas,
           reminder_time: profile.reminder_time,
           notifications_enabled: profile.notifications_enabled,
-          focus_areas: profile.focus_areas,
           email_opt_in: profile.notifications_enabled,
-        })
-        .select()
-        .single();
+          email_frequency: 'milestone_only',
+        });
 
-      if (error) {
-        console.error('Create profile error:', error);
-        return { success: false, error: error.message };
+      if (prefsError) {
+        console.error('Create preferences error:', prefsError);
+        return { success: false, error: prefsError.message };
       }
 
-      return { success: true, data };
+      return { success: true, data: profile };
     }
   } catch (err: any) {
     console.error('Create or update profile exception:', err);
