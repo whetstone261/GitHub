@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronRight, ChevronLeft, Target, Dumbbell, Home, Clock, Calendar } from 'lucide-react';
 import { User } from '../types';
 import AuthForm from './AuthForm';
-import { signUp, signIn } from '../lib/supabase';
+import { signUp, signIn, createOrUpdateProfile, supabase } from '../lib/supabase';
 
 interface OnboardingFlowProps {
   onComplete: (user: User, skipAuth?: boolean) => void;
@@ -31,64 +31,92 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     } else {
       // Complete onboarding - create profile with collected data
       if (!authData) {
-        setAuthError('Authentication data missing');
+        setAuthError('Authentication data missing. Please start over.');
         setStep(1);
         return;
       }
 
       setIsAuthLoading(true);
 
-      // Determine equipment category
-      let equipmentCategory: 'none' | 'basic' | 'gym';
-      if (formData.availableEquipment.length === 0) {
-        equipmentCategory = 'none';
-      } else if (formData.availableEquipment.some(eq =>
-        ['Treadmill', 'Stationary bike', 'Rowing machine', 'Elliptical', 'Squat rack', 'Barbell'].includes(eq)
-      )) {
-        equipmentCategory = 'gym';
-      } else {
-        equipmentCategory = 'basic';
-      }
+      try {
+        // Determine equipment category
+        let equipmentCategory: 'none' | 'basic' | 'gym';
+        if (formData.availableEquipment.length === 0) {
+          equipmentCategory = 'none';
+        } else if (formData.availableEquipment.some(eq =>
+          ['Treadmill', 'Stationary bike', 'Rowing machine', 'Elliptical', 'Squat rack', 'Barbell'].includes(eq)
+        )) {
+          equipmentCategory = 'gym';
+        } else {
+          equipmentCategory = 'basic';
+        }
 
-      // Create the user account with profile
-      const result = await signUp(authData.email, authData.password, {
-        name: authData.name,
-        fitness_level: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
-        goals: formData.goals,
-        equipment: equipmentCategory,
-        available_equipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
-        workout_frequency: 3,
-        preferred_duration: 30,
-        reminder_time: formData.reminderTime,
-        notifications_enabled: formData.notificationsEnabled,
-        focus_areas: formData.focusAreas,
-      });
+        // Validate all required fields
+        if (!formData.fitnessLevel) {
+          setAuthError('Please select your fitness level');
+          setStep(2);
+          setIsAuthLoading(false);
+          return;
+        }
 
-      if (result.success) {
-        const newUser: User = {
-          id: result.user!.id,
+        if (formData.goals.length === 0) {
+          setAuthError('Please select at least one goal');
+          setStep(3);
+          setIsAuthLoading(false);
+          return;
+        }
+
+        console.log('Creating account for:', authData.email);
+
+        // Create the user account with profile
+        const result = await signUp(authData.email, authData.password, {
           name: authData.name,
-          email: authData.email,
-          fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
+          fitness_level: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
           goals: formData.goals,
           equipment: equipmentCategory,
-          availableEquipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
-          workoutFrequency: 3,
-          preferredDuration: 30,
-          preferences: {
-            reminderTime: formData.reminderTime,
-            notificationsEnabled: formData.notificationsEnabled,
-            focusAreas: formData.focusAreas,
-          },
-          createdAt: new Date(),
-        };
-        onComplete(newUser, false);
-      } else {
-        setAuthError(result.error || 'Failed to create profile');
-        setStep(1);
-      }
+          available_equipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
+          workout_frequency: 3,
+          preferred_duration: 30,
+          reminder_time: formData.reminderTime,
+          notifications_enabled: formData.notificationsEnabled,
+          focus_areas: formData.focusAreas,
+        });
 
-      setIsAuthLoading(false);
+        if (result.success && result.user) {
+          console.log('Account created successfully:', result.user.id);
+
+          const newUser: User = {
+            id: result.user.id,
+            name: authData.name,
+            email: authData.email,
+            fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
+            goals: formData.goals,
+            equipment: equipmentCategory,
+            availableEquipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
+            workoutFrequency: 3,
+            preferredDuration: 30,
+            preferences: {
+              reminderTime: formData.reminderTime,
+              notificationsEnabled: formData.notificationsEnabled,
+              focusAreas: formData.focusAreas,
+            },
+            createdAt: new Date(),
+          };
+
+          setIsAuthLoading(false);
+          onComplete(newUser, false);
+        } else {
+          console.error('Sign up failed:', result.error);
+          setAuthError(result.error || 'Failed to create account. Please try again.');
+          setStep(1);
+          setIsAuthLoading(false);
+        }
+      } catch (err: any) {
+        console.error('Complete onboarding exception:', err);
+        setAuthError(err.message || 'An unexpected error occurred. Please try again.');
+        setStep(1);
+        setIsAuthLoading(false);
+      }
     }
   };
 
@@ -116,12 +144,33 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     setIsAuthLoading(true);
     setAuthError('');
 
-    // Store auth data and move to next step (collect fitness info)
-    setAuthData({ email, name, password });
+    try {
+      // First, check if account already exists
+      if (supabase) {
+        const { data: existingProfile } = await supabase
+          .from('user_profiles_extended')
+          .select('user_id')
+          .eq('email', email)
+          .maybeSingle();
 
-    // New user - proceed to fitness questions
-    setIsAuthLoading(false);
-    setStep(2);
+        if (existingProfile) {
+          setAuthError('An account with this email already exists. Please sign in instead.');
+          setIsAuthLoading(false);
+          return;
+        }
+      }
+
+      // Store auth data and move to next step (collect fitness info)
+      setAuthData({ email, name, password });
+
+      // New user - proceed to fitness questions
+      setIsAuthLoading(false);
+      setStep(2);
+    } catch (err: any) {
+      console.error('Sign up validation error:', err);
+      setAuthError(err.message || 'An error occurred. Please try again.');
+      setIsAuthLoading(false);
+    }
   };
 
   const handleSignIn = async (email: string, password: string) => {

@@ -24,31 +24,39 @@ function App() {
       const currentUser = await getCurrentUser();
 
       if (currentUser) {
+        console.log('Found existing user session:', currentUser.id);
         const profile = await getUserProfile(currentUser.id);
 
         if (profile) {
+          console.log('Profile loaded successfully');
           const userData: User = {
             id: currentUser.id,
-            name: profile.name,
-            email: profile.email,
-            fitnessLevel: profile.fitness_level,
-            goals: profile.goals,
-            equipment: profile.equipment,
-            availableEquipment: profile.available_equipment,
-            workoutFrequency: profile.workout_frequency,
-            preferredDuration: profile.preferred_duration,
-            workoutDays: profile.workout_days,
+            name: profile.name || 'User',
+            email: profile.email || currentUser.email || '',
+            fitnessLevel: profile.fitness_level || 'beginner',
+            goals: profile.goals || [],
+            equipment: profile.equipment || 'none',
+            availableEquipment: profile.available_equipment || undefined,
+            workoutFrequency: profile.workout_frequency || 3,
+            preferredDuration: profile.preferred_duration || 30,
+            workoutDays: profile.workout_days || undefined,
             preferences: {
-              reminderTime: profile.reminder_time,
-              notificationsEnabled: profile.notifications_enabled,
-              focusAreas: profile.focus_areas,
+              reminderTime: profile.reminder_time || '09:00',
+              notificationsEnabled: profile.notifications_enabled !== undefined ? profile.notifications_enabled : true,
+              focusAreas: profile.focus_areas || [],
             },
-            createdAt: new Date(profile.created_at),
+            createdAt: profile.created_at ? new Date(profile.created_at) : new Date(),
           };
 
           setUser(userData);
           setCurrentView('dashboard');
+        } else {
+          console.log('User authenticated but no profile found - needs onboarding');
+          // User is authenticated but has no profile - send to onboarding
+          setCurrentView('onboarding');
         }
+      } else {
+        console.log('No existing session found');
       }
     } catch (error) {
       console.error('Error checking session:', error);

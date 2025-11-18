@@ -542,6 +542,17 @@ export async function signUp(email: string, password: string, profile: Omit<User
   }
 
   try {
+    // Check if user already exists
+    const { data: existingUser } = await supabase
+      .from('user_profiles_extended')
+      .select('user_id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingUser) {
+      return { success: false, error: 'An account with this email already exists' };
+    }
+
     // Create auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -549,6 +560,7 @@ export async function signUp(email: string, password: string, profile: Omit<User
     });
 
     if (authError) {
+      console.error('Auth error:', authError);
       return { success: false, error: authError.message };
     }
 
@@ -556,29 +568,77 @@ export async function signUp(email: string, password: string, profile: Omit<User
       return { success: false, error: 'User creation failed' };
     }
 
-    // Create user profile
-    const { error: profileError } = await supabase
-      .from('user_profiles_extended')
-      .insert({
-        user_id: authData.user.id,
-        email: email,
-        name: profile.name,
-        fitness_level: profile.fitness_level,
-        goals: profile.goals,
-        equipment: profile.equipment,
-        available_equipment: profile.available_equipment || [],
-        workout_frequency: profile.workout_frequency,
-        preferred_duration: profile.preferred_duration,
-        workout_days: profile.workout_days || [],
-        reminder_time: profile.reminder_time,
-        notifications_enabled: profile.notifications_enabled,
-        focus_areas: profile.focus_areas,
-        email_opt_in: profile.notifications_enabled,
-      });
+    // Wait a brief moment to ensure auth user is fully created
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      return { success: false, error: 'Failed to create user profile' };
+    // Check if profile already exists (prevents duplicates)
+    const { data: existingProfile } = await supabase
+      .from('user_profiles_extended')
+      .select('user_id')
+      .eq('user_id', authData.user.id)
+      .maybeSingle();
+
+    if (existingProfile) {
+      console.log('Profile already exists for this user');
+      return { success: true, user: authData.user };
+    }
+
+    // Create user profile with retry logic
+    let profileCreated = false;
+    let attempts = 0;
+    const maxAttempts = 3;
+    let lastError = null;
+
+    while (!profileCreated && attempts < maxAttempts) {
+      attempts++;
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles_extended')
+        .insert({
+          user_id: authData.user.id,
+          email: email,
+          name: profile.name,
+          fitness_level: profile.fitness_level,
+          goals: profile.goals,
+          equipment: profile.equipment,
+          available_equipment: profile.available_equipment || [],
+          workout_frequency: profile.workout_frequency,
+          preferred_duration: profile.preferred_duration,
+          workout_days: profile.workout_days || [],
+          reminder_time: profile.reminder_time,
+          notifications_enabled: profile.notifications_enabled,
+          focus_areas: profile.focus_areas,
+          email_opt_in: profile.notifications_enabled,
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error(`Profile creation attempt ${attempts} failed:`, profileError);
+        lastError = profileError;
+
+        // If it's a duplicate key error, profile was created successfully
+        if (profileError.code === '23505') {
+          profileCreated = true;
+          break;
+        }
+
+        // Wait before retry
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } else {
+        console.log('Profile created successfully:', profileData);
+        profileCreated = true;
+      }
+    }
+
+    if (!profileCreated) {
+      console.error('Failed to create profile after multiple attempts:', lastError);
+      return {
+        success: false,
+        error: `Failed to create user profile: ${lastError?.message || 'Unknown error'}`
+      };
     }
 
     return { success: true, user: authData.user };
@@ -594,12 +654,14 @@ export async function signIn(email: string, password: string) {
   }
 
   try {
+    // Sign in with Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
+      console.error('Sign in error:', error);
       return { success: false, error: error.message };
     }
 
@@ -607,18 +669,37 @@ export async function signIn(email: string, password: string) {
       return { success: false, error: 'Sign in failed' };
     }
 
-    // Fetch user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles_extended')
-      .select('*')
-      .eq('user_id', data.user.id)
-      .maybeSingle();
+    // Fetch user profile with retry logic
+    let profile = null;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    if (profileError) {
-      console.error('Profile fetch error:', profileError);
-      return { success: false, error: 'Failed to fetch user profile' };
+    while (!profile && attempts < maxAttempts) {
+      attempts++;
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles_extended')
+        .select('*')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error(`Profile fetch attempt ${attempts} failed:`, profileError);
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } else {
+        profile = profileData;
+      }
     }
 
+    if (!profile) {
+      console.warn('User authenticated but profile not found');
+      // User exists but no profile - they need to complete onboarding
+      return { success: true, user: data.user, profile: null };
+    }
+
+    console.log('Profile loaded successfully:', profile);
     return { success: true, user: data.user, profile };
   } catch (err: any) {
     console.error('Sign in exception:', err);
@@ -680,5 +761,86 @@ export async function getUserProfile(userId: string) {
   } catch (err) {
     console.error('Get user profile exception:', err);
     return null;
+  }
+}
+
+export async function updateUserProfile(userId: string, profile: Partial<Omit<UserProfile, 'user_id' | 'email'>>) {
+  if (!supabase) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles_extended')
+      .update({
+        ...profile,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Update profile error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+  } catch (err: any) {
+    console.error('Update profile exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function createOrUpdateProfile(userId: string, email: string, profile: Omit<UserProfile, 'user_id' | 'email'>) {
+  if (!supabase) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+
+  try {
+    // Check if profile exists
+    const { data: existingProfile } = await supabase
+      .from('user_profiles_extended')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existingProfile) {
+      // Update existing profile
+      const result = await updateUserProfile(userId, profile);
+      return result;
+    } else {
+      // Create new profile
+      const { data, error } = await supabase
+        .from('user_profiles_extended')
+        .insert({
+          user_id: userId,
+          email: email,
+          name: profile.name,
+          fitness_level: profile.fitness_level,
+          goals: profile.goals,
+          equipment: profile.equipment,
+          available_equipment: profile.available_equipment || [],
+          workout_frequency: profile.workout_frequency,
+          preferred_duration: profile.preferred_duration,
+          workout_days: profile.workout_days || [],
+          reminder_time: profile.reminder_time,
+          notifications_enabled: profile.notifications_enabled,
+          focus_areas: profile.focus_areas,
+          email_opt_in: profile.notifications_enabled,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Create profile error:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data };
+    }
+  } catch (err: any) {
+    console.error('Create or update profile exception:', err);
+    return { success: false, error: err.message };
   }
 }
