@@ -10,9 +10,8 @@ interface OnboardingFlowProps {
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
+  const [authData, setAuthData] = useState<{ email: string; name: string; password: string } | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
     fitnessLevel: '',
     availableEquipment: [] as string[],
     goals: [] as string[],
@@ -22,16 +21,24 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     focusAreas: [] as string[]
   });
 
-  const totalSteps = 6;
+  const totalSteps = 5;
   const [authError, setAuthError] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
-      // Complete onboarding
-      // Determine equipment category based on what they have
+      // Complete onboarding - create profile with collected data
+      if (!authData) {
+        setAuthError('Authentication data missing');
+        setStep(1);
+        return;
+      }
+
+      setIsAuthLoading(true);
+
+      // Determine equipment category
       let equipmentCategory: 'none' | 'basic' | 'gym';
       if (formData.availableEquipment.length === 0) {
         equipmentCategory = 'none';
@@ -43,24 +50,45 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
         equipmentCategory = 'basic';
       }
 
-      const newUser: User = {
-        id: Date.now().toString(),
-        name: formData.name,
-        email: formData.email,
-        fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
+      // Create the user account with profile
+      const result = await signUp(authData.email, authData.password, {
+        name: authData.name,
+        fitness_level: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
         goals: formData.goals,
         equipment: equipmentCategory,
-        availableEquipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
-        workoutFrequency: 3,
-        preferredDuration: 30,
-        preferences: {
-          reminderTime: formData.reminderTime,
-          notificationsEnabled: formData.notificationsEnabled,
-          focusAreas: formData.focusAreas,
-        },
-        createdAt: new Date(),
-      };
-      onComplete(newUser);
+        available_equipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
+        workout_frequency: 3,
+        preferred_duration: 30,
+        reminder_time: formData.reminderTime,
+        notifications_enabled: formData.notificationsEnabled,
+        focus_areas: formData.focusAreas,
+      });
+
+      if (result.success) {
+        const newUser: User = {
+          id: result.user!.id,
+          name: authData.name,
+          email: authData.email,
+          fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
+          goals: formData.goals,
+          equipment: equipmentCategory,
+          availableEquipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
+          workoutFrequency: 3,
+          preferredDuration: 30,
+          preferences: {
+            reminderTime: formData.reminderTime,
+            notificationsEnabled: formData.notificationsEnabled,
+            focusAreas: formData.focusAreas,
+          },
+          createdAt: new Date(),
+        };
+        onComplete(newUser, false);
+      } else {
+        setAuthError(result.error || 'Failed to create profile');
+        setStep(1);
+      }
+
+      setIsAuthLoading(false);
     }
   };
 
@@ -88,56 +116,12 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     setIsAuthLoading(true);
     setAuthError('');
 
-    // Determine equipment category
-    let equipmentCategory: 'none' | 'basic' | 'gym';
-    if (formData.availableEquipment.length === 0) {
-      equipmentCategory = 'none';
-    } else if (formData.availableEquipment.some(eq =>
-      ['Treadmill', 'Stationary bike', 'Rowing machine', 'Elliptical', 'Squat rack', 'Barbell'].includes(eq)
-    )) {
-      equipmentCategory = 'gym';
-    } else {
-      equipmentCategory = 'basic';
-    }
+    // Store auth data and move to next step (collect fitness info)
+    setAuthData({ email, name, password });
 
-    const result = await signUp(email, password, {
-      name,
-      fitness_level: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
-      goals: formData.goals,
-      equipment: equipmentCategory,
-      available_equipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
-      workout_frequency: 3,
-      preferred_duration: 30,
-      reminder_time: formData.reminderTime,
-      notifications_enabled: formData.notificationsEnabled,
-      focus_areas: formData.focusAreas,
-    });
-
+    // New user - proceed to fitness questions
     setIsAuthLoading(false);
-
-    if (result.success) {
-      // Create user object and complete onboarding
-      const newUser: User = {
-        id: result.user!.id,
-        name,
-        email,
-        fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
-        goals: formData.goals,
-        equipment: equipmentCategory,
-        availableEquipment: formData.availableEquipment.length > 0 ? formData.availableEquipment : undefined,
-        workoutFrequency: 3,
-        preferredDuration: 30,
-        preferences: {
-          reminderTime: formData.reminderTime,
-          notificationsEnabled: formData.notificationsEnabled,
-          focusAreas: formData.focusAreas,
-        },
-        createdAt: new Date(),
-      };
-      onComplete(newUser, false);
-    } else {
-      setAuthError(result.error || 'Sign up failed');
-    }
+    setStep(2);
   };
 
   const handleSignIn = async (email: string, password: string) => {
@@ -177,12 +161,11 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
 
   const isStepValid = () => {
     switch (step) {
-      case 1: return formData.name && formData.email;
+      case 1: return false; // Auth step - validated by auth form
       case 2: return formData.fitnessLevel;
       case 3: return formData.goals.length > 0;
       case 4: return true; // Equipment selection is optional
       case 5: return true;
-      case 6: return false; // Auth step - validated by auth form
       default: return false;
     }
   };
@@ -208,29 +191,12 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           {step === 1 && (
             <div>
-              <h2 className="text-2xl font-bold text-[#2C2C2C] mb-6">Let's get started!</h2>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => updateFormData('name', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0074D9] focus:border-transparent"
-                    placeholder="Enter your name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => updateFormData('email', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0074D9] focus:border-transparent"
-                    placeholder="Enter your email"
-                  />
-                </div>
-              </div>
+              <AuthForm
+                onSignUp={handleSignUp}
+                onSignIn={handleSignIn}
+                isLoading={isAuthLoading}
+                error={authError}
+              />
             </div>
           )}
 
@@ -418,29 +384,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
             </div>
           )}
 
-          {step === 6 && (
-            <div>
-              <AuthForm
-                onSignUp={handleSignUp}
-                onSignIn={handleSignIn}
-                isLoading={isAuthLoading}
-                error={authError}
-              />
-            </div>
-          )}
         </div>
 
-        {/* Navigation - Hidden on auth step */}
-        {step !== 6 && (
+        {/* Navigation - Hidden on auth step (step 1) */}
+        {step !== 1 && (
           <div className="flex justify-between">
             <button
               onClick={handleBack}
-              disabled={step === 1}
-              className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
-                step === 1
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-[#0074D9] hover:bg-blue-50'
-              }`}
+              className="flex items-center px-6 py-3 rounded-lg font-medium transition-colors text-[#0074D9] hover:bg-blue-50"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Back
@@ -448,28 +399,15 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
 
             <button
               onClick={handleNext}
-              disabled={!isStepValid()}
+              disabled={!isStepValid() || isAuthLoading}
               className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
-                isStepValid()
+                isStepValid() && !isAuthLoading
                   ? 'bg-[#0074D9] text-white hover:bg-blue-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              Continue
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </button>
-          </div>
-        )}
-
-        {/* Back button only on auth step */}
-        {step === 6 && (
-          <div className="mt-4">
-            <button
-              onClick={handleBack}
-              className="flex items-center text-[#0074D9] hover:bg-blue-50 px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back to setup
+              {isAuthLoading ? 'Saving...' : step === totalSteps ? 'Complete Setup' : 'Continue'}
+              {!isAuthLoading && <ChevronRight className="w-4 h-4 ml-2" />}
             </button>
           </div>
         )}
