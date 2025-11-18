@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, TrendingUp, Target, Play, Award, Bell, Dumbbell, Activity, Zap, Heart } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Calendar, TrendingUp, Target, Play, Award, Bell, Dumbbell, Activity, Zap, Heart, LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { User } from '../types';
-import { getWorkoutStats, calculateStreak, supabase } from '../lib/supabase';
+import { getWorkoutStats, calculateStreak, signOut, supabase } from '../lib/supabase';
 
 interface DashboardProps {
   user: User;
   onStartPlanning: () => void;
   onViewProgress: () => void;
   onViewProgressDashboard?: () => void;
+  onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProgress, onViewProgressDashboard }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProgress, onViewProgressDashboard, onLogout }) => {
   const [stats, setStats] = useState({
     totalWorkouts: 0,
     thisWeek: 0,
@@ -18,10 +19,53 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
   });
   const [currentStreak, setCurrentStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadStats();
   }, [user.id]);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileMenu]);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    console.log('🚪 Logging out user...');
+
+    try {
+      const result = await signOut();
+
+      if (result.success) {
+        console.log('✅ Logout successful');
+        // Call parent's logout handler to redirect to welcome screen
+        onLogout();
+      } else {
+        console.error('❌ Logout failed:', result.error);
+        alert('Failed to log out. Please try again.');
+        setIsLoggingOut(false);
+      }
+    } catch (error) {
+      console.error('❌ Logout exception:', error);
+      alert('An error occurred while logging out.');
+      setIsLoggingOut(false);
+    }
+  };
 
   const loadStats = async () => {
     setIsLoading(true);
@@ -69,11 +113,84 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
               />
             </div>
             <div className="flex items-center space-x-4">
-              <Bell className="w-5 h-5 text-gray-500" />
-              <div className="w-8 h-8 bg-[#0074D9] rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
+              <Bell className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-700 transition-colors" />
+
+              {/* Profile Menu */}
+              <div className="relative" ref={profileMenuRef}>
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="w-8 h-8 bg-[#0074D9] rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  aria-label="Account menu"
+                >
+                  <span className="text-white font-semibold text-sm">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200">
+                    {/* User Info Section */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-[#0074D9] rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[#2C2C2C] truncate">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          // Future: Navigate to profile settings
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                      >
+                        <UserIcon className="w-4 h-4 text-gray-500" />
+                        <span>View Profile</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          // Future: Navigate to settings
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                      >
+                        <Settings className="w-4 h-4 text-gray-500" />
+                        <span>Settings</span>
+                      </button>
+                    </div>
+
+                    {/* Logout Section */}
+                    <div className="border-t border-gray-100 py-1">
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 transition-colors ${
+                          isLoggingOut
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-red-600 hover:bg-red-50'
+                        }`}
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>{isLoggingOut ? 'Logging out...' : 'Log Out'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

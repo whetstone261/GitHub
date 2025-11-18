@@ -90,6 +90,16 @@ function App() {
     setCurrentView('onboarding');
   };
 
+  const handleLogout = () => {
+    console.log('🚪 Handling logout - clearing user data and redirecting');
+    // Clear user state
+    setUser(null);
+    setWorkoutPlans([]);
+    // Redirect to landing page
+    setCurrentView('landing');
+    console.log('✅ Logout complete - redirected to landing page');
+  };
+
   // Show loading while checking auth
   if (isCheckingAuth) {
     return (
@@ -120,6 +130,7 @@ function App() {
           onStartPlanning={handleStartPlanning}
           onViewProgress={handleViewProgress}
           onViewProgressDashboard={handleViewProgressDashboard}
+          onLogout={handleLogout}
         />
       )}
       {currentView === 'planner' && user && (
