@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, TrendingUp, Target, Play, Award, Bell } from 'lucide-react';
+import { Calendar, TrendingUp, Target, Play, Award, Bell, Dumbbell, Activity, Zap, Heart } from 'lucide-react';
 import { User } from '../types';
 import { getWorkoutStats, calculateStreak, supabase } from '../lib/supabase';
 
@@ -82,25 +82,42 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-[#0074D9] to-[#9B59B6] rounded-xl p-8 mb-8 text-white">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
-          <p className="text-blue-100 text-lg mb-6">{randomMessage}</p>
-          <button
-            onClick={onStartPlanning}
-            className="bg-white text-[#0074D9] px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center"
-          >
-            <Play className="w-5 h-5 mr-2" />
-            Plan Today's Workout
-          </button>
+        <div className="bg-gradient-to-r from-[#0074D9] to-[#9B59B6] rounded-xl p-8 mb-8 text-white relative overflow-hidden">
+          {/* Background Fitness Icons */}
+          <div className="absolute inset-0 opacity-10">
+            <Dumbbell className="absolute top-4 right-10 w-24 h-24 transform rotate-12" />
+            <Activity className="absolute bottom-4 right-32 w-20 h-20" />
+          </div>
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold">Welcome back, {user.name}!</h1>
+              <Zap className="w-8 h-8 text-yellow-300" />
+            </div>
+            <p className="text-blue-100 text-lg mb-6 flex items-center gap-2">
+              <Heart className="w-5 h-5" />
+              {randomMessage}
+            </p>
+            <button
+              onClick={onStartPlanning}
+              className="bg-white text-[#0074D9] px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg flex items-center gap-2"
+            >
+              <Dumbbell className="w-5 h-5" />
+              Plan Today's Workout
+            </button>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Quick Stats */}
           <div className="lg:col-span-2 grid md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-[#0074D9]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[#2C2C2C]">Weekly Progress</h3>
-                <Calendar className="w-5 h-5 text-[#0074D9]" />
+                <h3 className="font-semibold text-[#2C2C2C] flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-[#0074D9]" />
+                  Weekly Progress
+                </h3>
+                <Activity className="w-5 h-5 text-[#0074D9] opacity-50" />
               </div>
               {isLoading ? (
                 <div className="text-gray-400">Loading...</div>
@@ -118,10 +135,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
               )}
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-[#9B59B6]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[#2C2C2C]">Total Workouts</h3>
-                <Target className="w-5 h-5 text-[#9B59B6]" />
+                <h3 className="font-semibold text-[#2C2C2C] flex items-center gap-2">
+                  <Target className="w-5 h-5 text-[#9B59B6]" />
+                  Total Workouts
+                </h3>
+                <Dumbbell className="w-5 h-5 text-[#9B59B6] opacity-50" />
               </div>
               {isLoading ? (
                 <div className="text-gray-400">Loading...</div>
@@ -133,22 +153,31 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
               )}
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-[#16A34A]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[#2C2C2C]">Average Duration</h3>
-                <TrendingUp className="w-5 h-5 text-[#7F8C8D]" />
+                <h3 className="font-semibold text-[#2C2C2C] flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-[#16A34A]" />
+                  Average Duration
+                </h3>
+                <Zap className="w-5 h-5 text-[#16A34A] opacity-50" />
               </div>
               <div className="text-2xl font-bold text-[#2C2C2C] mb-2">{user.preferredDuration}min</div>
               <div className="text-sm text-gray-600">Per workout session</div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-orange-500">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[#2C2C2C]">Current Streak</h3>
-                <Award className="w-5 h-5 text-orange-500" />
+                <h3 className="font-semibold text-[#2C2C2C] flex items-center gap-2">
+                  <Award className="w-5 h-5 text-orange-500" />
+                  Current Streak
+                </h3>
+                <div className="text-2xl">{currentStreak > 0 ? '🔥' : '💪'}</div>
               </div>
               <div className="text-2xl font-bold text-[#2C2C2C] mb-2">{currentStreak} {currentStreak === 1 ? 'day' : 'days'}</div>
-              <div className="text-sm text-orange-600">{currentStreak > 0 ? 'Keep it up!' : 'Start today!'}</div>
+              <div className="text-sm text-orange-600 flex items-center gap-1">
+                <Heart className="w-4 h-4" />
+                {currentStreak > 0 ? 'Keep it up!' : 'Start today!'}
+              </div>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Filter, Clock, Target, Dumbbell, CheckCircle, Play, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Filter, Clock, Target, Dumbbell, CheckCircle, Play, Calendar, ChevronDown, ChevronUp, Activity, Zap, Heart } from 'lucide-react';
 import { User, WorkoutPlan, Exercise } from '../types';
 import WorkoutCompletionModal from './WorkoutCompletionModal';
 import { supabase } from '../lib/supabase';
@@ -139,6 +139,22 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  };
+
+  // Helper function to get category icon and styling
+  const getCategoryStyle = (category: string) => {
+    const styles: Record<string, { icon: string; color: string; bg: string }> = {
+      'cardio': { icon: '❤️', color: 'text-red-700', bg: 'bg-red-100 border-red-200' },
+      'strength': { icon: '💪', color: 'text-blue-700', bg: 'bg-blue-100 border-blue-200' },
+      'chest': { icon: '💪', color: 'text-blue-700', bg: 'bg-blue-100 border-blue-200' },
+      'back': { icon: '🏋️', color: 'text-indigo-700', bg: 'bg-indigo-100 border-indigo-200' },
+      'shoulders': { icon: '🔱', color: 'text-purple-700', bg: 'bg-purple-100 border-purple-200' },
+      'arms': { icon: '💪', color: 'text-cyan-700', bg: 'bg-cyan-100 border-cyan-200' },
+      'legs': { icon: '🦵', color: 'text-green-700', bg: 'bg-green-100 border-green-200' },
+      'core': { icon: '⚡', color: 'text-yellow-700', bg: 'bg-yellow-100 border-yellow-200' },
+      'flexibility': { icon: '🧘', color: 'text-pink-700', bg: 'bg-pink-100 border-pink-200' },
+    };
+    return styles[category] || { icon: '🏃', color: 'text-gray-700', bg: 'bg-gray-100 border-gray-200' };
   };
 
   // Calendar helper functions
@@ -3149,14 +3165,22 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                                   }`}>
                                     <div className="flex items-start justify-between mb-2">
                                       <div className="flex-1">
-                                        <h5 className="font-medium text-sm text-[#2C2C2C]">
-                                          {exercise.isWarmup ? '🔥 ' : exercise.isCooldown ? '🧘 ' : ''}
-                                          {idx + 1}. {exercise.name}
-                                          {exercise.isWarmup ? ' (Warm-up)' : exercise.isCooldown ? ' (Cool-down)' : ''}
-                                        </h5>
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <h5 className="font-medium text-sm text-[#2C2C2C]">
+                                            {exercise.isWarmup ? '🔥 ' : exercise.isCooldown ? '🧘 ' : ''}
+                                            {idx + 1}. {exercise.name}
+                                          </h5>
+                                          {!exercise.isWarmup && !exercise.isCooldown && (
+                                            <span className={`text-xs px-2 py-0.5 rounded border ${getCategoryStyle(exercise.category).bg} ${getCategoryStyle(exercise.category).color} font-medium`}>
+                                              {getCategoryStyle(exercise.category).icon} {exercise.category}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {exercise.isWarmup && <span className="text-xs text-orange-600 font-medium">Warm-up</span>}
+                                        {exercise.isCooldown && <span className="text-xs text-blue-600 font-medium">Cool-down</span>}
                                         <p className="text-xs text-gray-600 mt-1">{exercise.description}</p>
                                       </div>
-                                      <span className="text-xs text-gray-500 capitalize ml-2">{exercise.difficulty}</span>
+                                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded capitalize">{exercise.difficulty}</span>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2 text-xs">
                                       {exercise.sets && exercise.reps && (
