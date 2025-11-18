@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingUp, Award, Calendar, Target, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
 import { User } from '../types';
-import { supabase } from '../lib/supabase';
+import { getWorkoutCompletionsForMonth, WorkoutCompletion } from '../lib/supabase';
 
 interface ProgressTrackerProps {
   user: User;
   onBack: () => void;
-}
-
-interface WorkoutCompletion {
-  id: string;
-  workout_date: string;
-  workout_name: string;
-  completed_at: string;
-  notes: string | null;
 }
 
 const ProgressTracker: React.FC<ProgressTrackerProps> = ({ user, onBack }) => {
@@ -29,32 +21,24 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ user, onBack }) => {
   const loadMonthData = async () => {
     setLoading(true);
     try {
-      const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-      const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+      console.log('📅 Loading workout data for month:', selectedDate.getMonth() + 1, selectedDate.getFullYear());
 
-      const { data: completionData, error: completionError } = await supabase
-        .from('workout_plan_completions')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('workout_date', startOfMonth.toISOString().split('T')[0])
-        .lte('workout_date', endOfMonth.toISOString().split('T')[0])
-        .order('workout_date', { ascending: true });
+      // Use our new function to get workout completions for the month
+      const completionData = await getWorkoutCompletionsForMonth(
+        user.id,
+        selectedDate.getFullYear(),
+        selectedDate.getMonth() + 1
+      );
 
-      if (completionError) throw completionError;
+      console.log(`✅ Loaded ${completionData.length} workout completions`);
+      setCompletions(completionData);
 
-      setCompletions(completionData || []);
-
-      const { data: milestoneData, error: milestoneError } = await supabase
-        .from('user_milestones')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('unlocked_at', { ascending: false });
-
-      if (milestoneError) throw milestoneError;
-
-      setMilestones(milestoneData || []);
+      // Note: Milestones querying removed for now, but can be re-added if needed
+      setMilestones([]);
     } catch (error) {
-      console.error('Error loading month data:', error);
+      console.error('❌ Error loading month data:', error);
+      setCompletions([]);
+      setMilestones([]);
     } finally {
       setLoading(false);
     }
@@ -86,7 +70,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ user, onBack }) => {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const dayWorkouts = completions.filter(c => c.workout_date === dateString);
+      const dayWorkouts = completions.filter(c => c.completion_date === dateString);
       days.push({
         date: day,
         hasWorkout: dayWorkouts.length > 0,
@@ -99,7 +83,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ user, onBack }) => {
 
   const getMonthStats = () => {
     const totalWorkouts = completions.length;
-    const uniqueDates = new Set(completions.map(c => c.workout_date)).size;
+    const uniqueDates = new Set(completions.map(c => c.completion_date)).size;
 
     return {
       totalWorkouts,
@@ -243,7 +227,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ user, onBack }) => {
                       <div>
                         <p className="font-medium text-[#2C2C2C]">{completion.workout_name}</p>
                         <p className="text-sm text-gray-600">
-                          {new Date(completion.workout_date).toLocaleDateString('en-US', {
+                          {new Date(completion.completion_date || completion.completed_at || '').toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
                             year: 'numeric'

@@ -16,16 +16,20 @@ export { supabase };
 export interface WorkoutCompletion {
   id?: string;
   user_id: string;
+  workout_id?: string; // Reference to saved_workout_plans
   workout_name: string;
-  workout_category: string;
+  workout_category?: string;
   duration_minutes: number;
   completed_at?: string;
+  completion_date?: string; // Date only (YYYY-MM-DD) for calendar display
   total_time_minutes?: number;
   notes?: string;
+  workout_type?: string;
+  exercises_completed?: any[]; // JSONB array of exercise details
   created_at?: string;
+  // Legacy fields (for backward compatibility)
   start_time?: string;
   end_time?: string;
-  workout_type?: string;
   total_volume?: number;
   progress_weight?: number;
   experience_level?: string;
@@ -56,7 +60,9 @@ export async function saveWorkoutCompletion(
   workoutCategory: string,
   durationMinutes: number,
   totalTimeMinutes?: number,
-  notes?: string
+  notes?: string,
+  workoutId?: string,
+  exercisesCompleted?: any[]
 ): Promise<string | null> {
   if (!supabase) {
     console.warn('Supabase not configured');
@@ -64,28 +70,37 @@ export async function saveWorkoutCompletion(
   }
 
   try {
+    console.log('💾 Saving workout completion:', { workoutName, durationMinutes });
+
+    const completedAt = new Date();
+    const completionDate = completedAt.toISOString().split('T')[0]; // YYYY-MM-DD
+
     const { data, error } = await supabase
       .from('workout_completions')
       .insert({
         user_id: userId,
+        workout_id: workoutId,
         workout_name: workoutName,
         workout_category: workoutCategory,
         duration_minutes: durationMinutes,
         total_time_minutes: totalTimeMinutes,
         notes: notes,
-        completed_at: new Date().toISOString()
+        completed_at: completedAt.toISOString(),
+        completion_date: completionDate,
+        exercises_completed: exercisesCompleted || []
       })
       .select('id')
       .single();
 
     if (error) {
-      console.error('Error saving workout completion:', error);
+      console.error('❌ Error saving workout completion:', error);
       return null;
     }
 
+    console.log('✅ Workout completion saved:', data.id);
     return data?.id || null;
   } catch (err) {
-    console.error('Exception saving workout:', err);
+    console.error('❌ Exception saving workout:', err);
     return null;
   }
 }
@@ -194,6 +209,137 @@ export async function getExerciseLogs(workoutCompletionId: string) {
     return data || [];
   } catch (err) {
     console.error('Exception fetching exercise logs:', err);
+    return [];
+  }
+}
+
+// ============================================================================
+// CALENDAR & COMPLETION TRACKING FUNCTIONS
+// ============================================================================
+
+/**
+ * Get workout completions for a specific date range (for calendar display)
+ */
+export async function getWorkoutCompletionsByDateRange(
+  userId: string,
+  startDate: string, // YYYY-MM-DD
+  endDate: string    // YYYY-MM-DD
+): Promise<WorkoutCompletion[]> {
+  if (!supabase) {
+    console.warn('Supabase not configured');
+    return [];
+  }
+
+  try {
+    console.log('📅 Fetching completions from', startDate, 'to', endDate);
+
+    const { data, error } = await supabase
+      .from('workout_completions')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('completion_date', startDate)
+      .lte('completion_date', endDate)
+      .order('completion_date', { ascending: true });
+
+    if (error) {
+      console.error('❌ Error fetching workout completions by date:', error);
+      return [];
+    }
+
+    console.log(`✅ Found ${data?.length || 0} completions in date range`);
+    return data || [];
+  } catch (err) {
+    console.error('❌ Exception fetching completions by date:', err);
+    return [];
+  }
+}
+
+/**
+ * Get workout completions for a specific month (for calendar display)
+ */
+export async function getWorkoutCompletionsForMonth(
+  userId: string,
+  year: number,
+  month: number // 1-12
+): Promise<WorkoutCompletion[]> {
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+  return getWorkoutCompletionsByDateRange(userId, startDate, endDate);
+}
+
+/**
+ * Get workout completions for a specific date (for daily view)
+ */
+export async function getWorkoutCompletionsForDate(
+  userId: string,
+  date: string // YYYY-MM-DD
+): Promise<WorkoutCompletion[]> {
+  if (!supabase) {
+    console.warn('Supabase not configured');
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('workout_completions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('completion_date', date)
+      .order('completed_at', { ascending: true });
+
+    if (error) {
+      console.error('❌ Error fetching completions for date:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('❌ Exception fetching completions for date:', err);
+    return [];
+  }
+}
+
+/**
+ * Get all dates that have completed workouts (for calendar highlighting)
+ */
+export async function getCompletedWorkoutDates(
+  userId: string,
+  year?: number,
+  month?: number
+): Promise<string[]> {
+  if (!supabase) {
+    console.warn('Supabase not configured');
+    return [];
+  }
+
+  try {
+    let query = supabase
+      .from('workout_completions')
+      .select('completion_date')
+      .eq('user_id', userId);
+
+    // Filter by year/month if provided
+    if (year && month) {
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, month, 0).getDate();
+      const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      query = query.gte('completion_date', startDate).lte('completion_date', endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('❌ Error fetching completed dates:', error);
+      return [];
+    }
+
+    // Extract unique dates
+    const uniqueDates = [...new Set(data?.map(d => d.completion_date) || [])];
+    return uniqueDates;
+  } catch (err) {
+    console.error('❌ Exception fetching completed dates:', err);
     return [];
   }
 }
