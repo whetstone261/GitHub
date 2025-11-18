@@ -177,34 +177,55 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     setIsAuthLoading(true);
     setAuthError('');
 
-    const result = await signIn(email, password);
+    console.log('Starting sign in process...');
 
-    setIsAuthLoading(false);
+    try {
+      const result = await signIn(email, password);
 
-    if (result.success && result.profile) {
-      // User exists, create user object from profile
-      const profile = result.profile;
-      const newUser: User = {
-        id: result.user!.id,
-        name: profile.name,
-        email: profile.email,
-        fitnessLevel: profile.fitness_level,
-        goals: profile.goals,
-        equipment: profile.equipment,
-        availableEquipment: profile.available_equipment,
-        workoutFrequency: profile.workout_frequency,
-        preferredDuration: profile.preferred_duration,
-        workoutDays: profile.workout_days,
-        preferences: {
-          reminderTime: profile.reminder_time,
-          notificationsEnabled: profile.notifications_enabled,
-          focusAreas: profile.focus_areas,
-        },
-        createdAt: new Date(profile.created_at),
-      };
-      onComplete(newUser, true); // Skip onboarding since user already exists
-    } else {
-      setAuthError(result.error || 'Sign in failed');
+      console.log('Sign in result:', { success: result.success, hasProfile: !!result.profile, hasUser: !!result.user });
+
+      if (result.success && result.user) {
+        if (result.profile) {
+          // User exists with complete profile - load and continue
+          console.log('User authenticated with complete profile');
+          const profile = result.profile;
+          const newUser: User = {
+            id: result.user.id,
+            name: profile.name,
+            email: profile.email,
+            fitnessLevel: profile.fitness_level,
+            goals: profile.goals,
+            equipment: profile.equipment,
+            availableEquipment: profile.available_equipment,
+            workoutFrequency: profile.workout_frequency,
+            preferredDuration: profile.preferred_duration,
+            workoutDays: profile.workout_days,
+            preferences: {
+              reminderTime: profile.reminder_time,
+              notificationsEnabled: profile.notifications_enabled,
+              focusAreas: profile.focus_areas,
+            },
+            createdAt: new Date(profile.created_at),
+          };
+          setIsAuthLoading(false);
+          onComplete(newUser, true); // Skip onboarding since user already exists
+        } else {
+          // User authenticated but no profile - needs to complete onboarding
+          console.log('User authenticated but profile not found - proceeding to onboarding');
+          setAuthError('Account found but profile incomplete. Please complete the onboarding steps.');
+          setIsAuthLoading(false);
+          // User will proceed through onboarding steps 2-5
+        }
+      } else {
+        // Authentication failed
+        console.error('Sign in failed:', result.error);
+        setAuthError(result.error || 'Sign in failed. Please check your credentials.');
+        setIsAuthLoading(false);
+      }
+    } catch (err: any) {
+      console.error('Sign in exception in component:', err);
+      setAuthError(err.message || 'An unexpected error occurred. Please try again.');
+      setIsAuthLoading(false);
     }
   };
 

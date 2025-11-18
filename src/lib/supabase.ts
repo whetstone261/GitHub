@@ -678,35 +678,55 @@ export async function signUp(email: string, password: string, profile: Omit<User
 
 export async function signIn(email: string, password: string) {
   if (!supabase) {
-    return { success: false, error: 'Supabase not configured' };
+    return { success: false, error: 'Supabase not configured. Please check your environment variables.' };
   }
 
   try {
-    // Sign in with Supabase Auth
+    console.log('Attempting sign in for:', email);
+
+    // Sign in with Supabase Auth - THIS CHECKS AUTH.USERS TABLE
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      console.error('Sign in error:', error);
+      console.error('Supabase Auth sign in error:', error);
+
+      // Provide specific error messages based on error code
+      if (error.message.includes('Invalid login credentials')) {
+        return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
+      }
+      if (error.message.includes('Email not confirmed')) {
+        return { success: false, error: 'Please confirm your email address before signing in.' };
+      }
+      if (error.message.includes('User not found')) {
+        return { success: false, error: 'No account found with this email. Please sign up first.' };
+      }
+
+      // Return the actual Supabase error message
       return { success: false, error: error.message };
     }
 
     if (!data.user) {
-      return { success: false, error: 'Sign in failed' };
+      return { success: false, error: 'Authentication failed. No user data returned.' };
     }
 
+    console.log('✅ Authentication successful for user:', data.user.id);
+
     // Fetch user data from both tables with retry logic
+    console.log('Fetching user profile data for user:', data.user.id);
     let combinedProfile = null;
     let attempts = 0;
     const maxAttempts = 3;
 
     while (!combinedProfile && attempts < maxAttempts) {
       attempts++;
+      console.log(`Profile fetch attempt ${attempts}/${maxAttempts}`);
 
       try {
-        // Fetch profile
+        // Fetch profile from profiles table
+        console.log('Querying profiles table...');
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -714,15 +734,20 @@ export async function signIn(email: string, password: string) {
           .maybeSingle();
 
         if (profileError) {
+          console.error('Profile fetch error:', profileError);
           throw profileError;
         }
 
         if (!profileData) {
-          console.warn('User authenticated but profile not found');
+          console.warn('⚠️ User authenticated but profile not found in profiles table');
+          console.warn('User may need to complete onboarding');
           return { success: true, user: data.user, profile: null };
         }
 
-        // Fetch preferences
+        console.log('✅ Profile found:', { name: profileData.name, email: profileData.email });
+
+        // Fetch preferences from onboarding_preferences table
+        console.log('Querying onboarding_preferences table...');
         const { data: prefsData, error: prefsError } = await supabase
           .from('onboarding_preferences')
           .select('*')
@@ -730,20 +755,31 @@ export async function signIn(email: string, password: string) {
           .maybeSingle();
 
         if (prefsError) {
+          console.error('Preferences fetch error:', prefsError);
           throw prefsError;
         }
 
         if (!prefsData) {
-          console.warn('Profile found but preferences not found');
+          console.warn('⚠️ Profile found but preferences not found');
+          console.warn('User needs to complete onboarding');
           return { success: true, user: data.user, profile: null };
         }
 
-        // Fetch stats
+        console.log('✅ Preferences found:', { fitness_level: prefsData.fitness_level, goals: prefsData.goals });
+
+        // Fetch stats from user_stats table
+        console.log('Querying user_stats table...');
         const { data: statsData } = await supabase
           .from('user_stats')
           .select('*')
           .eq('user_id', data.user.id)
           .maybeSingle();
+
+        if (statsData) {
+          console.log('✅ Stats found:', { total_workouts: statsData.total_workouts_completed, streak: statsData.current_streak_days });
+        } else {
+          console.log('ℹ️ No stats found (will use defaults)');
+        }
 
         // Combine all data into UserProfile format
         combinedProfile = {
@@ -779,15 +815,22 @@ export async function signIn(email: string, password: string) {
     }
 
     if (!combinedProfile) {
-      console.warn('User authenticated but profile data could not be loaded');
+      console.warn('⚠️ User authenticated but profile data could not be loaded');
+      console.warn('This user may need to complete onboarding');
       return { success: true, user: data.user, profile: null };
     }
 
-    console.log('Profile loaded successfully');
+    console.log('✅ Profile loaded successfully');
     return { success: true, user: data.user, profile: combinedProfile };
   } catch (err: any) {
-    console.error('Sign in exception:', err);
-    return { success: false, error: err.message };
+    console.error('❌ Sign in exception:', err);
+
+    // Provide detailed error message
+    if (err.message) {
+      return { success: false, error: `Sign in error: ${err.message}` };
+    }
+
+    return { success: false, error: 'An unexpected error occurred during sign in. Please try again.' };
   }
 }
 
