@@ -106,11 +106,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <img 
-                src="/public/guided-gains-high-resolution-logo.png" 
-                alt="Guided Gains Logo" 
-                className="h-8 w-auto"
-              />
+              <h1 className="text-xl font-bold text-[#2C2C2C]">Guided Gains</h1>
             </div>
             <div className="flex items-center space-x-4">
               <Bell className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-700 transition-colors" />
