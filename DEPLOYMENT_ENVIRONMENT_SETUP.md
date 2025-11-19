@@ -1,5 +1,26 @@
 # Deployment Environment Variables Setup
 
+## 🚨 Quick Fix for "Supabase Not Working" Error
+
+**If you're seeing errors on your published site but it works in Bolt/local development:**
+
+### The Problem
+- ✅ Works locally: Vite reads from `.env` file
+- ❌ Doesn't work when published: `.env` file is not included in production builds (by design)
+
+### The Solution (Takes 5 minutes)
+1. **Go to your hosting dashboard** (Netlify or Vercel)
+2. **Find "Environment Variables" settings** (usually in Settings or Build & Deploy section)
+3. **Add these 2 variables:**
+   - Key: `VITE_SUPABASE_URL` → Value: Your Supabase project URL
+   - Key: `VITE_SUPABASE_ANON_KEY` → Value: Your Supabase anon key
+4. **Redeploy** your site (click "Deploy" or "Trigger deploy" → "Clear cache")
+5. **Test** - Try signing up on your published site
+
+**That's it!** Your app should now work on the published site. 🎉
+
+---
+
 ## ⚠️ Issue: Supabase Not Working on Published Site
 
 The `.env` file is **not included** in production builds for security reasons. You must configure environment variables directly in your hosting platform.

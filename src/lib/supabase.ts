@@ -8,7 +8,27 @@ let supabase: any = null;
 if (supabaseUrl && supabaseAnonKey) {
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 } else {
-  console.warn('Supabase environment variables not configured. Database features will be disabled.');
+  console.error('❌ SUPABASE NOT CONFIGURED - Database features will be disabled!');
+  console.error('');
+  console.error('🔧 TO FIX THIS ISSUE:');
+  console.error('');
+  console.error('For LOCAL DEVELOPMENT:');
+  console.error('  1. Copy .env.example to .env');
+  console.error('  2. Add your Supabase URL and Anon Key to .env');
+  console.error('');
+  console.error('For PRODUCTION DEPLOYMENT (Netlify/Vercel):');
+  console.error('  1. Go to your hosting platform dashboard');
+  console.error('  2. Navigate to Environment Variables settings');
+  console.error('  3. Add these variables:');
+  console.error('     - VITE_SUPABASE_URL');
+  console.error('     - VITE_SUPABASE_ANON_KEY');
+  console.error('  4. Redeploy your site');
+  console.error('');
+  console.error('📖 See DEPLOYMENT_ENVIRONMENT_SETUP.md for detailed instructions');
+  console.error('');
+  console.error('Current values:');
+  console.error('  VITE_SUPABASE_URL:', supabaseUrl ? '✓ SET' : '✗ MISSING');
+  console.error('  VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✓ SET' : '✗ MISSING');
 }
 
 export { supabase };
@@ -684,7 +704,10 @@ export interface UserProfile {
 
 export async function signUp(email: string, password: string, profile: Omit<UserProfile, 'user_id' | 'email'>) {
   if (!supabase) {
-    return { success: false, error: 'Supabase not configured' };
+    return { 
+      success: false, 
+      error: 'Database connection not configured. Please check that VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables are set. See console for setup instructions.' 
+    };
   }
 
   try {
@@ -824,7 +847,10 @@ export async function signUp(email: string, password: string, profile: Omit<User
 
 export async function signIn(email: string, password: string) {
   if (!supabase) {
-    return { success: false, error: 'Supabase not configured. Please check your environment variables.' };
+    return { 
+      success: false, 
+      error: 'Database connection not configured. Please check that VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables are set in your hosting platform. See console for setup instructions.' 
+    };
   }
 
   try {
