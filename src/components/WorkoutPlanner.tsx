@@ -79,6 +79,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
               category: ww.focus_area,
               equipment: data.equipment,
               dayOfWeek: ww.day_of_week,
+              scheduledDate: ww.scheduled_date ? new Date(ww.scheduled_date) : undefined,
               focusArea: ww.focus_area,
               createdAt: new Date(ww.created_at)
             })) || [],
@@ -223,9 +224,26 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
     return restDayMap[frequency] || ['Sunday'];
   };
 
-  // Helper function to get weekly workout schedule with proper spacing
-  const getWeeklySchedule = (frequency: number, focusAreas: string[]): { day: string; focus: string }[] => {
-    const schedule: { day: string; focus: string }[] = [];
+  // Helper function to get the current week's dates
+  const getCurrentWeekDates = () => {
+    const today = new Date();
+    return getWeekDates(today);
+  };
+
+  // Helper function to map day names to actual dates in the current week
+  const getDateForDayName = (dayName: string): Date => {
+    const weekDates = getCurrentWeekDates();
+    const dayMap: { [key: string]: number } = {
+      'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
+      'Friday': 4, 'Saturday': 5, 'Sunday': 6
+    };
+    const dayIndex = dayMap[dayName];
+    return weekDates[dayIndex];
+  };
+
+  // Helper function to get weekly workout schedule with proper spacing and real dates
+  const getWeeklySchedule = (frequency: number, focusAreas: string[]): { day: string; date: Date; focus: string }[] => {
+    const schedule: { day: string; date: Date; focus: string }[] = [];
 
     // Determine focus rotation
     const focuses = focusAreas.length > 0 ? focusAreas : ['upper-body', 'lower-body', 'cardio', 'core'];
@@ -236,6 +254,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       selectedWorkoutDays.forEach((day, index) => {
         schedule.push({
           day: day,
+          date: getDateForDayName(day),
           focus: focuses[index % focuses.length]
         });
       });
@@ -245,36 +264,36 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
       if (frequency === 3) {
         // Monday, Wednesday, Friday
         schedule.push(
-          { day: 'Monday', focus: focuses[0 % focuses.length] },
-          { day: 'Wednesday', focus: focuses[1 % focuses.length] },
-          { day: 'Friday', focus: focuses[2 % focuses.length] }
+          { day: 'Monday', date: getDateForDayName('Monday'), focus: focuses[0 % focuses.length] },
+          { day: 'Wednesday', date: getDateForDayName('Wednesday'), focus: focuses[1 % focuses.length] },
+          { day: 'Friday', date: getDateForDayName('Friday'), focus: focuses[2 % focuses.length] }
         );
       } else if (frequency === 4) {
         // Monday, Tuesday, Thursday, Saturday
         schedule.push(
-          { day: 'Monday', focus: focuses[0 % focuses.length] },
-          { day: 'Tuesday', focus: focuses[1 % focuses.length] },
-          { day: 'Thursday', focus: focuses[2 % focuses.length] },
-          { day: 'Saturday', focus: focuses[3 % focuses.length] }
+          { day: 'Monday', date: getDateForDayName('Monday'), focus: focuses[0 % focuses.length] },
+          { day: 'Tuesday', date: getDateForDayName('Tuesday'), focus: focuses[1 % focuses.length] },
+          { day: 'Thursday', date: getDateForDayName('Thursday'), focus: focuses[2 % focuses.length] },
+          { day: 'Saturday', date: getDateForDayName('Saturday'), focus: focuses[3 % focuses.length] }
         );
       } else if (frequency === 5) {
         // Monday, Tuesday, Thursday, Friday, Saturday
         schedule.push(
-          { day: 'Monday', focus: focuses[0 % focuses.length] },
-          { day: 'Tuesday', focus: focuses[1 % focuses.length] },
-          { day: 'Thursday', focus: focuses[2 % focuses.length] },
-          { day: 'Friday', focus: focuses[3 % focuses.length] },
-          { day: 'Saturday', focus: focuses[4 % focuses.length] }
+          { day: 'Monday', date: getDateForDayName('Monday'), focus: focuses[0 % focuses.length] },
+          { day: 'Tuesday', date: getDateForDayName('Tuesday'), focus: focuses[1 % focuses.length] },
+          { day: 'Thursday', date: getDateForDayName('Thursday'), focus: focuses[2 % focuses.length] },
+          { day: 'Friday', date: getDateForDayName('Friday'), focus: focuses[3 % focuses.length] },
+          { day: 'Saturday', date: getDateForDayName('Saturday'), focus: focuses[4 % focuses.length] }
         );
       } else if (frequency === 6) {
         // Monday through Saturday
         schedule.push(
-          { day: 'Monday', focus: focuses[0 % focuses.length] },
-          { day: 'Tuesday', focus: focuses[1 % focuses.length] },
-          { day: 'Wednesday', focus: focuses[2 % focuses.length] },
-          { day: 'Thursday', focus: focuses[3 % focuses.length] },
-          { day: 'Friday', focus: focuses[4 % focuses.length] },
-          { day: 'Saturday', focus: focuses[5 % focuses.length] }
+          { day: 'Monday', date: getDateForDayName('Monday'), focus: focuses[0 % focuses.length] },
+          { day: 'Tuesday', date: getDateForDayName('Tuesday'), focus: focuses[1 % focuses.length] },
+          { day: 'Wednesday', date: getDateForDayName('Wednesday'), focus: focuses[2 % focuses.length] },
+          { day: 'Thursday', date: getDateForDayName('Thursday'), focus: focuses[3 % focuses.length] },
+          { day: 'Friday', date: getDateForDayName('Friday'), focus: focuses[4 % focuses.length] },
+          { day: 'Saturday', date: getDateForDayName('Saturday'), focus: focuses[5 % focuses.length] }
         );
       }
     }
@@ -2615,6 +2634,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
         category: dayPlan.focus,
         equipment: selectedFilters.equipment,
         dayOfWeek: dayPlan.day,
+        scheduledDate: dayPlan.date,
         focusArea: dayPlan.focus,
         createdAt: new Date()
       };
@@ -2670,11 +2690,12 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
         if (planError) throw planError;
 
-        // Save each day's workout
+        // Save each day's workout with scheduled dates
         if (planData && generatedPlan.weeklyWorkouts) {
           const weeklyWorkoutsData = generatedPlan.weeklyWorkouts.map(workout => ({
             saved_plan_id: planData.id,
             day_of_week: workout.dayOfWeek!,
+            scheduled_date: workout.scheduledDate ? workout.scheduledDate.toISOString().split('T')[0] : null,
             workout_name: workout.name,
             focus_area: workout.focusArea,
             workout_data: { exercises: workout.exercises }
@@ -3107,12 +3128,23 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                             isCompleted ? 'border-green-300 bg-green-50' : 'border-gray-200'
                           }`}>
                             <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center space-x-2">
-                                <h3 className="text-lg font-semibold text-[#2C2C2C]">{dayWorkout.name}</h3>
-                                {isCompleted && (
-                                  <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
-                                    ✓ Complete
-                                  </span>
+                              <div className="flex flex-col">
+                                <div className="flex items-center space-x-2">
+                                  <h3 className="text-lg font-semibold text-[#2C2C2C]">{dayWorkout.name}</h3>
+                                  {isCompleted && (
+                                    <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
+                                      ✓ Complete
+                                    </span>
+                                  )}
+                                </div>
+                                {dayWorkout.scheduledDate && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {dayWorkout.scheduledDate.toLocaleDateString('en-US', {
+                                      weekday: 'long',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </p>
                                 )}
                               </div>
                               <div className="flex items-center space-x-4 text-sm">

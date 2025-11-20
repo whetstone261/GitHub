@@ -49,6 +49,7 @@ export interface WorkoutPlan {
   isWeeklyPlan?: boolean;
   weeklyWorkouts?: WorkoutPlan[];
   dayOfWeek?: string;
+  scheduledDate?: Date;
   focusArea?: string;
 }
 
