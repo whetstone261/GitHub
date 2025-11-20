@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, TrendingUp, Target, Play, Award, Bell, Dumbbell, Activity, Zap, Heart, LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { User } from '../types';
 import { getWorkoutStats, calculateStreak, signOut, supabase } from '../lib/supabase';
+import FitnessProfileModal from './FitnessProfileModal';
 
 interface DashboardProps {
   user: User;
@@ -21,6 +22,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
   const [isLoading, setIsLoading] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showFitnessProfileModal, setShowFitnessProfileModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User>(user);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -161,12 +164,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
                       <button
                         onClick={() => {
                           setShowProfileMenu(false);
-                          // Future: Navigate to settings
+                          setShowFitnessProfileModal(true);
                         }}
                         className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
                       >
                         <Settings className="w-4 h-4 text-gray-500" />
-                        <span>Settings</span>
+                        <span>Edit Fitness Profile</span>
                       </button>
                     </div>
 
@@ -349,6 +352,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartPlanning, onViewProg
         </div>
 
       </div>
+
+      {/* Fitness Profile Modal */}
+      {showFitnessProfileModal && (
+        <FitnessProfileModal
+          user={currentUser}
+          onClose={() => setShowFitnessProfileModal(false)}
+          onSave={(updatedUser) => {
+            setCurrentUser(updatedUser);
+            loadStats();
+          }}
+        />
+      )}
     </div>
   );
 };
