@@ -2871,8 +2871,8 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Duration</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['15', '30', '45', '60'].map((duration) => (
+                <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                  {Array.from({ length: 24 }, (_, i) => ((i + 1) * 5).toString()).map((duration) => (
                     <button
                       key={duration}
                       onClick={() => setSelectedFilters(prev => ({ ...prev, duration }))}
