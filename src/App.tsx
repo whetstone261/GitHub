@@ -111,7 +111,7 @@ function App() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <p className="text-gray-600">Loading Guided Gains...</p>
+          <p className="text-gray-600">Loading <span className="brand-text-solid text-[#2C2C2C]">Guided Gains</span>...</p>
         </div>
       </div>
     );

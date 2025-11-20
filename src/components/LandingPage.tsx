@@ -13,7 +13,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <h1 className="text-xl font-bold text-[#2C2C2C]">Guided Gains</h1>
+              <h1 className="text-2xl brand-text">Guided Gains</h1>
             </div>
             <button
               onClick={onGetStarted}
@@ -245,7 +245,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       {/* Footer */}
       <footer className="bg-[#2C2C2C] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Guided Gains</h2>
+          <h2 className="text-3xl brand-text-solid text-white mb-4">Guided Gains</h2>
           <p className="text-gray-400">
             © 2024 Guided Gains. Making fitness accessible for everyone.
           </p>
