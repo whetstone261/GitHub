@@ -112,8 +112,37 @@ export default function WorkoutCompletionModal({
       setCalendarEventId(result.calendarEventId || null);
       setProgressUpdate(result.progress);
 
-      // Check for newly unlocked milestones and send emails
+      // Also save to workout_calendar table for calendar display
       const { supabase } = await import('../lib/supabase');
+      const workoutDate = workout.scheduledDate || new Date();
+      const { error: calendarError } = await supabase
+        .from('workout_calendar')
+        .insert({
+          user_id: userId,
+          date: workoutDate.toISOString().split('T')[0],
+          workout_name: workout.name,
+          duration_minutes: totalTime,
+          exercises: exerciseLogs
+        });
+
+      if (calendarError) {
+        console.error('Error saving to workout_calendar:', calendarError);
+      }
+
+      // Mark planned workout as completed if it exists
+      if (workout.scheduledDate) {
+        const { error: plannedError } = await supabase
+          .from('planned_workouts')
+          .update({ is_completed: true })
+          .eq('user_id', userId)
+          .eq('date', workoutDate.toISOString().split('T')[0]);
+
+        if (plannedError) {
+          console.error('Error updating planned workout:', plannedError);
+        }
+      }
+
+      // Check for newly unlocked milestones and send emails
       const { data: newMilestones } = await supabase
         .from('user_milestones')
         .select('*')
