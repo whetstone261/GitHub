@@ -16,23 +16,54 @@ const FitnessProfileModal: React.FC<FitnessProfileModalProps> = ({ user, onClose
   const [saveMessage, setSaveMessage] = useState('');
 
   const equipmentOptions = [
-    'Dumbbells',
-    'Barbell',
-    'Resistance Bands',
-    'Pull-up Bar',
-    'Kettlebell',
-    'Bench',
-    'Medicine Ball',
-    'Jump Rope',
-    'Yoga Mat',
-    'Foam Roller',
-    'Cable Machine',
-    'Smith Machine',
-    'Leg Press Machine',
-    'Rowing Machine',
-    'Treadmill',
-    'Stationary Bike',
-    'Elliptical'
+    "Yoga mat",
+    "Resistance bands (light)",
+    "Resistance bands (medium)",
+    "Resistance bands (heavy)",
+    "Pull-up bar (door frame)",
+    "Adjustable dumbbells",
+    "Fixed-weight dumbbells (5–10 lb)",
+    "Fixed-weight dumbbells (10–20 lb)",
+    "Fixed-weight dumbbells (20–30 lb)",
+    "Kettlebell (light)",
+    "Kettlebell (medium)",
+    "Kettlebell (heavy)",
+    "Adjustable bench",
+    "Step platform or box",
+    "Foam roller",
+    "Medicine ball",
+    "Stability ball",
+    "Ab wheel",
+    "Jump rope",
+    "Mini bands / loop bands",
+    "Sliders / gliding discs",
+    "Weight plates",
+    "EZ curl bar",
+    "Barbell",
+    "Squat rack",
+    "Dip bars / parallel bars",
+    "TRX or suspension trainer",
+    "Treadmill",
+    "Stationary bike",
+    "Rowing machine",
+    "Elliptical",
+    "Stair stepper",
+    "Punching bag",
+    "Battle ropes",
+    "Weighted vest",
+    "Pull-up assist band",
+    "Door anchor for bands",
+    "Push-up handles",
+    "Foam blocks / yoga blocks",
+    "Balance board / BOSU ball",
+    "Ankle weights",
+    "Hand grippers",
+    "Resistance tubes with handles",
+    "Pilates ring",
+    "Workout bench (flat only)",
+    "Workout bench (adjustable incline/decline)",
+    "Workout gloves",
+    "Mat towel"
   ];
 
   const toggleEquipment = (equipment: string) => {
@@ -140,26 +171,38 @@ const FitnessProfileModal: React.FC<FitnessProfileModalProps> = ({ user, onClose
             <p className="text-sm text-gray-600 mb-4">
               Select all equipment you have access to. This helps us create better workout plans for you.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
               {equipmentOptions.map((equipment) => (
                 <button
                   key={equipment}
                   onClick={() => toggleEquipment(equipment)}
-                  className={`p-3 text-sm rounded-lg border transition-all ${
+                  className={`p-3 text-left border-2 rounded-lg transition-all text-sm ${
                     availableEquipment.includes(equipment)
-                      ? 'border-[#0074D9] bg-blue-50 text-[#0074D9] font-medium'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      ? 'border-[#0074D9] bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  {equipment}
+                  <div className="flex items-center">
+                    <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center ${
+                      availableEquipment.includes(equipment)
+                        ? 'bg-[#0074D9] border-[#0074D9]'
+                        : 'border-gray-300'
+                    }`}>
+                      {availableEquipment.includes(equipment) && (
+                        <span className="text-white text-xs">✓</span>
+                      )}
+                    </div>
+                    <span className="font-medium text-[#2C2C2C]">{equipment}</span>
+                  </div>
                 </button>
               ))}
             </div>
-            {availableEquipment.length === 0 && (
-              <p className="text-sm text-amber-600 mt-3 flex items-center space-x-2">
-                <span>💡</span>
-                <span>Select at least one piece of equipment or choose bodyweight exercises</span>
-              </p>
+            {availableEquipment.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-[#0074D9] font-medium">
+                  {availableEquipment.length} item{availableEquipment.length !== 1 ? 's' : ''} selected
+                </p>
+              </div>
             )}
           </div>
 
