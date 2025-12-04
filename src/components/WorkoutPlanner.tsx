@@ -3032,7 +3032,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                 <div className="space-y-2">
                   {[
                     { id: 'none', label: 'No Equipment' },
-                    { id: 'basic', label: 'Basic Equipment' },
+                    { id: 'basic', label: 'Home Equipment' },
                     { id: 'gym', label: 'Full Gym' }
                   ].map((equipment) => (
                     <button
@@ -3365,7 +3365,7 @@ const WorkoutPlanner: React.FC<WorkoutPlannerProps> = ({ user, onBack, workoutPl
                       <div className="flex items-center text-gray-600">
                         <Dumbbell className="w-4 h-4 mr-2" />
                         {generatedPlan.equipment === 'none' ? 'No Equipment' :
-                         generatedPlan.equipment === 'basic' ? 'Basic Equipment' : 'Full Gym'}
+                         generatedPlan.equipment === 'basic' ? 'Home Equipment' : 'Full Gym'}
                       </div>
                       <div className="flex items-center">
                         <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
